@@ -6,8 +6,8 @@ import tech.nullexdev.cinemood.di.initKoin
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    initKoin()
     ComposeViewport {
-        _root_ide_package_.tech.nullexdev.cinemood.di.initKoin()
-        _root_ide_package_.tech.nullexdev.cinemood.App()
+        App()
     }
 }

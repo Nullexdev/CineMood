@@ -11,9 +11,9 @@ data class MovieDto(
     val poster: String,
     val genres: List<String>,
     val images: List<String>
-) : DomainConvertible<tech.nullexdev.cinemood.service.domain.moodel.Movie> {
-    override fun toDomainModel(): tech.nullexdev.cinemood.service.domain.moodel.Movie =
-        _root_ide_package_.tech.nullexdev.cinemood.service.domain.moodel.Movie(
+) : DomainConvertible<Movie> {
+    override fun toDomainModel(): Movie =
+        Movie(
             id = id,
             title = title,
             poster = poster,

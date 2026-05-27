@@ -12,14 +12,14 @@ val iranianMoviesApiDataModule = module {
         HttpClientFactory.create()
     }
 
-    single<tech.nullexdev.cinemood.service.data.iranianmoviesapi.datasource.MoviesRemoteDataSource> {
-        _root_ide_package_.tech.nullexdev.cinemood.service.data.iranianmoviesapi.datasource.MoviesRemoteDataSourceImpl(
+    single<MoviesRemoteDataSource> {
+        MoviesRemoteDataSourceImpl(
             get()
         )
     }
 
-    single<tech.nullexdev.cinemood.service.domain.repository.MoviesRepository> {
-        _root_ide_package_.tech.nullexdev.cinemood.service.data.iranianmoviesapi.repository.MoviesRepositoryImpl(
+    single<MoviesRepository> {
+        MoviesRepositoryImpl(
             get()
         )
     }

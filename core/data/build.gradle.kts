@@ -89,6 +89,24 @@ kotlin {
                 implementation(libs.ktor.client.darwin)
             }
         }
+
+        jvmMain {
+            dependencies {
+                implementation("io.ktor:ktor-client-java:${libs.versions.ktor.get()}")
+            }
+        }
+
+        jsMain {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:${libs.versions.ktor.get()}")
+            }
+        }
+
+        wasmJsMain {
+            dependencies {
+                implementation("io.ktor:ktor-client-js:${libs.versions.ktor.get()}")
+            }
+        }
     }
 
 }

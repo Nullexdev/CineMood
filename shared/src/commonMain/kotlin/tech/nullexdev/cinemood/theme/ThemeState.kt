@@ -35,18 +35,18 @@ class ThemeState {
 }
 
 // Create a composition local for the theme state
-val LocalThemeState = compositionLocalOf { _root_ide_package_.tech.nullexdev.cinemood.theme.ThemeState() }
+val LocalThemeState = compositionLocalOf { ThemeState() }
 
 // Updated app theme
 @Composable
 fun MyKMPAppTheme(
-    themeState: tech.nullexdev.cinemood.theme.ThemeState = remember { _root_ide_package_.tech.nullexdev.cinemood.theme.ThemeState() },
+    themeState: ThemeState = remember { ThemeState() },
     content: @Composable () -> Unit
 ) {
     val darkTheme = themeState.isDarkTheme()
     val colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
 
-    CompositionLocalProvider(_root_ide_package_.tech.nullexdev.cinemood.theme.LocalThemeState provides themeState) {
+    CompositionLocalProvider(LocalThemeState provides themeState) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography(),

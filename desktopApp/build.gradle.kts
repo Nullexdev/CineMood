@@ -15,6 +15,12 @@ dependencies {
     implementation(libs.compose.uiToolingPreview)
 }
 
+sourceSets {
+    main {
+        kotlin.srcDirs("kotlin")
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "tech.nullexdev.cinemood.MainKt"

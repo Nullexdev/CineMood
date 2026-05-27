@@ -11,3 +11,17 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinJvm) apply false
     alias(libs.plugins.kotlinxSerialization) apply false
 }
+
+val wasmYarnLockPath: String = "${rootProject.layout.buildDirectory.get().asFile.absolutePath}/wasm/yarn.lock"
+
+tasks.matching { task -> task.name == "kotlinWasmStoreYarnLock" }.configureEach {
+    doFirst {
+        val wasmYarnLockFile = java.io.File(wasmYarnLockPath)
+        if (!wasmYarnLockFile.parentFile.exists()) {
+            wasmYarnLockFile.parentFile.mkdirs()
+        }
+        if (!wasmYarnLockFile.exists()) {
+            wasmYarnLockFile.writeText("")
+        }
+    }
+}

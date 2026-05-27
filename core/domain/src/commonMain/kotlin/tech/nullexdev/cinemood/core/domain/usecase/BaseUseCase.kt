@@ -19,7 +19,7 @@ interface BaseUseCase<in P, R> {
      * @param parameters The input parameters for the use case
      * @return Flow emitting BaseResult with the result or error
      */
-    operator fun invoke(parameters: P): Flow<tech.nullexdev.cinemood.core.domain.common.BaseResult<R>>
+    operator fun invoke(parameters: P): Flow<BaseResult<R>>
 }
 
 /**
@@ -34,7 +34,7 @@ interface BaseUseCaseNoParams<R> {
      *
      * @return Flow emitting BaseResult with the result or error
      */
-    operator fun invoke(): Flow<tech.nullexdev.cinemood.core.domain.common.BaseResult<R>>
+    operator fun invoke(): Flow<BaseResult<R>>
 }
 
 /**
@@ -46,14 +46,14 @@ interface BaseUseCaseNoParams<R> {
 fun <R> executeUseCase(
     operationName: String,
     block: suspend () -> R
-): Flow<tech.nullexdev.cinemood.core.domain.common.BaseResult<R>> = flow {
+): Flow<BaseResult<R>> = flow {
     println("Executing use case: $operationName")
     try {
         val result = block()
         println("Use case completed: $operationName - Success")
-        emit(_root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(result))
+        emit(BaseResult.Success(result))
     } catch (e: Exception) {
         println("Use case failed: $operationName - Error: ${e.message}")
-        emit(_root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(e))
+        emit(BaseResult.Error(e))
     }
 }

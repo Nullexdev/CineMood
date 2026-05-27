@@ -6,11 +6,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class MoviesResponseDto(
-    val data: List<tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MovieDto>,
-    val metadata: tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MetadataDto
-) : DomainConvertible<tech.nullexdev.cinemood.service.domain.moodel.MoviesPage> {
-    override fun toDomainModel(): tech.nullexdev.cinemood.service.domain.moodel.MoviesPage =
-        _root_ide_package_.tech.nullexdev.cinemood.service.domain.moodel.MoviesPage(
+    val data: List<MovieDto>,
+    val metadata: MetadataDto
+) : DomainConvertible<MoviesPage> {
+    override fun toDomainModel(): MoviesPage =
+        MoviesPage(
             movies = data.map { it.toDomainModel() },
             currentPage = metadata.current_page,
             perPage = metadata.per_page,

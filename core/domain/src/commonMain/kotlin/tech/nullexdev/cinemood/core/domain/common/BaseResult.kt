@@ -13,7 +13,7 @@ sealed class BaseResult<out T> {
      *
      * @param data The successful result data
      */
-    data class Success<out T>(val data: T) : tech.nullexdev.cinemood.core.domain.common.BaseResult<T>()
+    data class Success<out T>(val data: T) : BaseResult<T>()
 
     /**
      * Represents a failed operation with exception details.
@@ -21,7 +21,7 @@ sealed class BaseResult<out T> {
      * @param exception The exception that caused the failure
      * @param message Optional custom error message
      */
-    data class Error(val exception: Exception, val message: String? = null) : tech.nullexdev.cinemood.core.domain.common.BaseResult<Nothing>()
+    data class Error(val exception: Exception, val message: String? = null) : BaseResult<Nothing>()
 
     /**
      * Checks if the result is successful.
@@ -61,7 +61,7 @@ sealed class BaseResult<out T> {
      * @param action The action to perform on the success data
      * @return The same BaseResult instance for chaining
      */
-    inline fun onSuccess(action: (T) -> Unit): tech.nullexdev.cinemood.core.domain.common.BaseResult<T> {
+    inline fun onSuccess(action: (T) -> Unit): BaseResult<T> {
         if (this is Success) action(data)
         return this
     }
@@ -72,7 +72,7 @@ sealed class BaseResult<out T> {
      * @param action The action to perform on the error details
      * @return The same BaseResult instance for chaining
      */
-    inline fun onError(action: (Exception, String?) -> Unit): tech.nullexdev.cinemood.core.domain.common.BaseResult<T> {
+    inline fun onError(action: (Exception, String?) -> Unit): BaseResult<T> {
         if (this is Error) action(exception, message)
         return this
     }
@@ -83,10 +83,10 @@ sealed class BaseResult<out T> {
  *
  * @return BaseResult representation of the Result
  */
-fun <T> Result<T>.toBaseResult(): tech.nullexdev.cinemood.core.domain.common.BaseResult<T> {
+fun <T> Result<T>.toBaseResult(): BaseResult<T> {
     return fold(
-        onSuccess = { _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(it) },
-        onFailure = { _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(it as Exception) }
+        onSuccess = { BaseResult.Success(it) },
+        onFailure = { BaseResult.Error(it as Exception) }
     )
 }
 
@@ -134,10 +134,10 @@ fun <T> Result<T>.toBaseResult(): tech.nullexdev.cinemood.core.domain.common.Bas
  *
  * @see toBaseResult for the version without transformation
  */
-fun <T, R> Result<T>.toBaseResult(transform: (T) -> R): tech.nullexdev.cinemood.core.domain.common.BaseResult<R> {
+fun <T, R> Result<T>.toBaseResult(transform: (T) -> R): BaseResult<R> {
     return fold(
-        onSuccess = { _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(transform(it)) },
-        onFailure = { _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(it as Exception) }
+        onSuccess = { BaseResult.Success(transform(it)) },
+        onFailure = { BaseResult.Error(it as Exception) }
     )
 }
 
@@ -146,10 +146,10 @@ fun <T, R> Result<T>.toBaseResult(transform: (T) -> R): tech.nullexdev.cinemood.
  *
  * @return Kotlin Result representation of the BaseResult
  */
-fun <T> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.toKotlinResult(): Result<T> {
+fun <T> BaseResult<T>.toKotlinResult(): Result<T> {
     return when (this) {
-        is tech.nullexdev.cinemood.core.domain.common.BaseResult.Success -> Result.success(data)
-        is tech.nullexdev.cinemood.core.domain.common.BaseResult.Error -> Result.failure(exception)
+        is BaseResult.Success -> Result.success(data)
+        is BaseResult.Error -> Result.failure(exception)
     }
 }
 
@@ -160,10 +160,10 @@ fun <T> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.toKotlinResult(
  * @param transform The transformation function
  * @return New BaseResult with transformed data or the same error
  */
-inline fun <T, R> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.map(transform: (T) -> R): tech.nullexdev.cinemood.core.domain.common.BaseResult<R> {
+inline fun <T, R> BaseResult<T>.map(transform: (T) -> R): BaseResult<R> {
     return when (this) {
-        is tech.nullexdev.cinemood.core.domain.common.BaseResult.Success -> _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(transform(data))
-        is tech.nullexdev.cinemood.core.domain.common.BaseResult.Error -> _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(exception, message)
+        is BaseResult.Success -> BaseResult.Success(transform(data))
+        is BaseResult.Error -> BaseResult.Error(exception, message)
     }
 }
 
@@ -172,15 +172,15 @@ inline fun <T, R> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.map(t
  *
  * @return BaseResult containing list of all success values, or first error encountered
  */
-fun <T> List<tech.nullexdev.cinemood.core.domain.common.BaseResult<T>>.sequence(): tech.nullexdev.cinemood.core.domain.common.BaseResult<List<T>> {
+fun <T> List<BaseResult<T>>.sequence(): BaseResult<List<T>> {
     val results = mutableListOf<T>()
     forEach { result ->
         when (result) {
-            is tech.nullexdev.cinemood.core.domain.common.BaseResult.Success -> results.add(result.data)
-            is tech.nullexdev.cinemood.core.domain.common.BaseResult.Error -> return _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(result.exception, result.message)
+            is BaseResult.Success -> results.add(result.data)
+            is BaseResult.Error -> return BaseResult.Error(result.exception, result.message)
         }
     }
-    return _root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(results)
+    return BaseResult.Success(results)
 }
 
 /**
@@ -189,8 +189,8 @@ fun <T> List<tech.nullexdev.cinemood.core.domain.common.BaseResult<T>>.sequence(
  * @param defaultValue The default value to return if result is Error
  * @return The success data or the default value
  */
-fun <T> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.getOrDefault(defaultValue: T): T {
-    return (this as? tech.nullexdev.cinemood.core.domain.common.BaseResult.Success)?.data ?: defaultValue
+fun <T> BaseResult<T>.getOrDefault(defaultValue: T): T {
+    return (this as? BaseResult.Success)?.data ?: defaultValue
 }
 
 /**
@@ -199,6 +199,6 @@ fun <T> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.getOrDefault(de
  * @param predicate The condition to check on the success data
  * @return true if result is Success and predicate returns true, false otherwise
  */
-inline fun <T> tech.nullexdev.cinemood.core.domain.common.BaseResult<T>.isSuccessAnd(predicate: (T) -> Boolean): Boolean {
-    return (this as? tech.nullexdev.cinemood.core.domain.common.BaseResult.Success)?.let { predicate(it.data) } ?: false
+inline fun <T> BaseResult<T>.isSuccessAnd(predicate: (T) -> Boolean): Boolean {
+    return (this as? BaseResult.Success)?.let { predicate(it.data) } ?: false
 }

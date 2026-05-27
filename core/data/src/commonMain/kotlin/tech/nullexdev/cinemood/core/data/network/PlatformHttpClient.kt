@@ -14,7 +14,7 @@ expect fun provideEngine(): HttpClientEngine
 object HttpClientFactory {
 
     fun create(): HttpClient {
-        return HttpClient(_root_ide_package_.tech.nullexdev.cinemood.core.data.network.provideEngine()) {
+        return HttpClient(provideEngine()) {
 
             install(ContentNegotiation) {
                 json(

@@ -1,10 +1,8 @@
 // domain/repository/BaseRepository.kt
 package tech.nullexdev.cinemood.core.domain.repository
 
-import tech.nullexdev.cinemood.core.domain.common.BaseResult
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
@@ -15,7 +13,7 @@ import kotlinx.coroutines.flow.flowOn
  * This function automatically handles coroutine contexts and error catching.
  *
  * @param operationName Name of the operation for logging purposes
- * @param dispatcher The coroutine dispatcher to use (defaults to Dispatchers.IO)
+ * @param dispatcher The coroutine dispatcher to use (defaults to Dispatchers.Default)
  * @param block The suspend function to execute
  * @return Flow emitting BaseResult containing either success data or error
  *
@@ -23,7 +21,7 @@ import kotlinx.coroutines.flow.flowOn
  * ```
  * fun fetchMovies(page: Int): Flow<BaseResult<MoviesPage>> = executeToFlow(
  *     operationName = "fetchMovies(page=$page)",
- *     dispatcher = Dispatchers.IO
+ *     dispatcher = Dispatchers.Default
  * ) {
  *     api.getMovies(page)
  * }
@@ -31,21 +29,21 @@ import kotlinx.coroutines.flow.flowOn
  */
 fun <T> executeToFlow(
     operationName: String,
-    dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
     block: suspend () -> T
 ): Flow<tech.nullexdev.cinemood.core.domain.common.BaseResult<T>> = flow {
     println("Starting: $operationName on $dispatcher")
     try {
         val result = block()
         println("Finished: $operationName - Success")
-        emit(_root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(result))
+        emit(tech.nullexdev.cinemood.core.domain.common.BaseResult.Success(result))
     } catch (e: Exception) {
         println("Finished: $operationName - Error: ${e.message}")
-        emit(_root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(e))
+        emit(tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(e))
     }
 }.flowOn(dispatcher)
     .catch { e ->
-        emit(_root_ide_package_.tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(e as? Exception ?: Exception(e)))
+        emit(tech.nullexdev.cinemood.core.domain.common.BaseResult.Error(e as? Exception ?: Exception(e)))
     }
 
 /**
@@ -60,9 +58,9 @@ fun <T> executeToIoFlow(
     operationName: String,
     block: suspend () -> T
 ): Flow<tech.nullexdev.cinemood.core.domain.common.BaseResult<T>> =
-    _root_ide_package_.tech.nullexdev.cinemood.core.domain.repository.executeToFlow(
+    executeToFlow(
         operationName,
-        Dispatchers.IO,
+        Dispatchers.Default,
         block
     )
 
@@ -78,7 +76,7 @@ fun <T> executeToDefaultFlow(
     operationName: String,
     block: suspend () -> T
 ): Flow<tech.nullexdev.cinemood.core.domain.common.BaseResult<T>> =
-    _root_ide_package_.tech.nullexdev.cinemood.core.domain.repository.executeToFlow(
+    executeToFlow(
         operationName,
         Dispatchers.Default,
         block
@@ -109,7 +107,7 @@ interface BaseRepository
  * }
  * ```
  */
-suspend fun <T : tech.nullexdev.cinemood.core.domain.repository.BaseRepository> T.executeWithLogging(
+suspend fun <T : BaseRepository> T.executeWithLogging(
     operationName: String,
     block: suspend T.() -> tech.nullexdev.cinemood.core.domain.common.BaseResult<*>
 ): tech.nullexdev.cinemood.core.domain.common.BaseResult<*> {

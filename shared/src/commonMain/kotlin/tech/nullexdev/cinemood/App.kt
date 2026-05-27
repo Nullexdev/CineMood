@@ -42,16 +42,16 @@ import tech.nullexdev.cinemood.theme.ThemeState
 @Composable
 @Preview
 fun App() {
-    val themeState = remember { _root_ide_package_.tech.nullexdev.cinemood.theme.ThemeState() }
+    val themeState = remember { ThemeState() }
 
-    _root_ide_package_.tech.nullexdev.cinemood.theme.MyKMPAppTheme(themeState = themeState) {
+    MyKMPAppTheme(themeState = themeState) {
         Scaffold(
             topBar = {
-                _root_ide_package_.tech.nullexdev.cinemood.CMTopAppBar()
+                CMTopAppBar()
             },
             bottomBar = {
                 val selectedItem = remember { mutableIntStateOf(0) }
-                _root_ide_package_.tech.nullexdev.cinemood.CMNavigationBar(selectedItem = selectedItem)
+                CMNavigationBar(selectedItem = selectedItem)
             }
         ) { innerPadding ->
             Column(
