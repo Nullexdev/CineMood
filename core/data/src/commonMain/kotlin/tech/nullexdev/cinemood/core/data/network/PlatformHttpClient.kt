@@ -15,7 +15,6 @@ object HttpClientFactory {
 
     fun create(): HttpClient {
         return HttpClient(provideEngine()) {
-
             install(ContentNegotiation) {
                 json(
                     Json {
