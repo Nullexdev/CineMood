@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.androidLint)
-    alias(libs.plugins.composeMultiplatform)
-    alias(libs.plugins.composeCompiler)
 }
 
 kotlin {
@@ -14,9 +12,13 @@ kotlin {
     // which platforms this KMP module supports.
     // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
     android {
-        namespace = "tech.nullexdev.cinemood.feature.home"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
-        minSdk = libs.versions.android.minSdk.get().toInt()
+        namespace = "com.alimmzdev.cinemood.core.presentation"
+        compileSdk {
+            version = release(36) {
+                minorApiLevel = 1
+            }
+        }
+        minSdk = 24
 
         withHostTestBuilder {
         }
@@ -35,7 +37,13 @@ kotlin {
     // A step-by-step guide on how to include this library in an XCode
     // project can be found here:
     // https://developer.android.com/kotlin/multiplatform/migrate
-    val xcfName = "feature:homeKit"
+    val xcfName = "core:presentationKit"
+
+    iosX64 {
+        binaries.framework {
+            baseName = xcfName
+        }
+    }
 
     iosArm64 {
         binaries.framework {
@@ -70,21 +78,10 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(projects.core.presentation)
-                implementation(projects.service.domain)
-
                 implementation(libs.kotlin.stdlib)
-                implementation(libs.compose.runtime)
-                implementation(libs.compose.foundation)
-                implementation(libs.compose.material3)
-                implementation(libs.compose.ui)
-                implementation(libs.compose.uiToolingPreview)
-                implementation(libs.compose.components.resources)
-                implementation(libs.androidx.lifecycle.viewmodelCompose)
-                implementation(libs.androidx.lifecycle.runtimeCompose)
-                implementation(libs.koin.core)
-                implementation(libs.koin.compose)
-                implementation(libs.koin.compose.viewmodel)
+                api(libs.coil.compose)
+                api(libs.coil.network.ktor)
+                api(libs.compose.material.icons.extended)
             }
         }
 
@@ -96,14 +93,16 @@ kotlin {
 
         androidMain {
             dependencies {
-                implementation(libs.compose.uiToolingPreview)
+                // Add Android-specific dependencies here. Note that this source set depends on
+                // commonMain by default and will correctly pull the Android artifacts of any KMP
+                // dependencies declared in commonMain.
             }
         }
 
         getByName("androidDeviceTest") {
             dependencies {
-                implementation(libs.androidx.runner)
                 implementation(libs.androidx.core)
+                implementation(libs.androidx.runner)
                 implementation(libs.androidx.testExt.junit)
             }
         }
@@ -119,8 +118,4 @@ kotlin {
         }
     }
 
-}
-
-dependencies {
-    androidRuntimeClasspath(libs.compose.uiTooling)
 }

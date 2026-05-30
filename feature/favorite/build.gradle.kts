@@ -70,6 +70,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(projects.core.presentation)
                 implementation(projects.core.domain)
                 implementation(libs.kotlin.stdlib)
                 implementation(libs.compose.runtime)
