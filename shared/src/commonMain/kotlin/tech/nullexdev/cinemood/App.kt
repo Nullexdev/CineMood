@@ -26,32 +26,63 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
+import tech.nullexdev.cinemood.core.navigation.Screen
+import tech.nullexdev.cinemood.feature.favorite.FavoriteScreen
+import tech.nullexdev.cinemood.feature.home.HomeScreen
+import tech.nullexdev.cinemood.feature.search.SearchScreen
+import tech.nullexdev.cinemood.feature.settings.SettingsScreen
 import tech.nullexdev.cinemood.theme.MyKMPAppTheme
 import tech.nullexdev.cinemood.theme.ThemeState
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
+val navSerializationConfig = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(Screen.Home::class)
+            subclass(Screen.Search::class)
+            subclass(Screen.Favorite::class)
+            subclass(Screen.Settings::class)
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 @Preview
 fun App() {
     val themeState = remember { ThemeState() }
+    val backStack = rememberNavBackStack(
+        configuration = navSerializationConfig,
+        Screen.Home,
+    )
 
     MyKMPAppTheme(themeState = themeState) {
         Scaffold(
-            topBar = {
-                CMTopAppBar()
-            },
+            topBar = { CMTopAppBar() },
             bottomBar = {
-                val selectedItem = remember { mutableIntStateOf(0) }
-                CMNavigationBar(selectedItem = selectedItem)
+                CMNavigationBar(
+                    currentScreen = backStack.last(),
+                    onNavigate = { screen ->
+                        if (backStack.last() != screen) {
+                            // Clear backstack and push the new screen for bottom nav
+                            backStack.clear()
+                            backStack.add(screen)
+                        }
+                    }
+                )
             }
         ) { innerPadding ->
             Column(
@@ -61,7 +92,20 @@ fun App() {
                     .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-
+                NavDisplay(
+                    backStack = backStack,
+                    onBack = {
+                        if (backStack.size > 1) {
+                            backStack.removeLast()
+                        }
+                    },
+                    entryProvider = entryProvider {
+                        entry<Screen.Home> { HomeScreen() }
+                        entry<Screen.Search> { SearchScreen() }
+                        entry<Screen.Favorite> { FavoriteScreen() }
+                        entry<Screen.Settings> { SettingsScreen() }
+                    }
+                )
             }
         }
     }
@@ -114,7 +158,8 @@ fun CMTopAppBar() {
 
 @Composable
 fun CMNavigationBar(
-    selectedItem: MutableIntState,
+    currentScreen: NavKey,
+    onNavigate: (Screen) -> Unit,
 ) {
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface,
@@ -122,19 +167,10 @@ fun CMNavigationBar(
         tonalElevation = 0.dp
     ) {
         NavigationBarItem(
-            selected = selectedItem.value == 0,
-            onClick = {
-                selectedItem.value = 0
-            },
-            label = {
-                Text("Home")
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Home,
-                    contentDescription = "Navigation Home Icon"
-                )
-            },
+            selected = currentScreen == Screen.Home,
+            onClick = { onNavigate(Screen.Home) },
+            label = { Text("Home") },
+            icon = { Icon(Icons.Default.Home, contentDescription = "Navigation Home Icon") },
             colors = NavigationBarItemColors(
                 selectedTextColor = Color.Red,
                 selectedIconColor = Color.Red,
@@ -146,19 +182,10 @@ fun CMNavigationBar(
             )
         )
         NavigationBarItem(
-            selected = selectedItem.value == 1,
-            onClick = {
-                selectedItem.value = 1
-            },
-            label = {
-                Text("Search")
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Navigation Search Icon"
-                )
-            },
+            selected = currentScreen == Screen.Search,
+            onClick = { onNavigate(Screen.Search) },
+            label = { Text("Search") },
+            icon = { Icon(Icons.Default.Search, contentDescription = "Navigation Search Icon") },
             colors = NavigationBarItemColors(
                 selectedTextColor = Color.Red,
                 selectedIconColor = Color.Red,
@@ -170,19 +197,10 @@ fun CMNavigationBar(
             )
         )
         NavigationBarItem(
-            selected = selectedItem.value == 2,
-            onClick = {
-                selectedItem.value = 2
-            },
-            label = {
-                Text("Favorite")
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.FavoriteBorder,
-                    contentDescription = "Navigation Favorite Icon"
-                )
-            },
+            selected = currentScreen == Screen.Favorite,
+            onClick = { onNavigate(Screen.Favorite) },
+            label = { Text("Favorite") },
+            icon = { Icon(Icons.Default.FavoriteBorder, contentDescription = "Navigation Favorite Icon") },
             colors = NavigationBarItemColors(
                 selectedTextColor = Color.Red,
                 selectedIconColor = Color.Red,
@@ -194,7 +212,10 @@ fun CMNavigationBar(
             )
         )
         NavigationBarItem(
-            selected = selectedItem.value == 3,
+            selected = currentScreen == Screen.Settings,
+            onClick = { onNavigate(Screen.Settings) },
+            label = { Text("Settings") },
+            icon = { Icon(Icons.Default.Settings, contentDescription = "Navigation Settings Icon") },
             colors = NavigationBarItemColors(
                 selectedTextColor = Color.Red,
                 selectedIconColor = Color.Red,
@@ -203,19 +224,7 @@ fun CMNavigationBar(
                 unselectedTextColor = Color.Gray,
                 disabledIconColor = Color.Gray.copy(alpha = 0.2f),
                 disabledTextColor = Color.Gray.copy(alpha = 0.2f)
-            ),
-            onClick = {
-                selectedItem.value = 3
-            },
-            label = {
-                Text("Settings")
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Navigation Settings Icon"
-                )
-            }
+            )
         )
     }
 }

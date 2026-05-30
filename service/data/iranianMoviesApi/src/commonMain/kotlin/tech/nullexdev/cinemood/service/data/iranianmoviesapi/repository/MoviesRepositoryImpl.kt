@@ -41,8 +41,8 @@ import kotlinx.coroutines.flow.flow
  * @since 1.0.0
  */
 class MoviesRepositoryImpl(
-    private val remoteDataSource: tech.nullexdev.cinemood.service.data.iranianmoviesapi.datasource.MoviesRemoteDataSource
-) : tech.nullexdev.cinemood.service.domain.repository.MoviesRepository {
+    private val remoteDataSource: MoviesRemoteDataSource
+) : MoviesRepository {
 
     /**
      * Retrieves a paginated list of movies as a reactive [Flow].
@@ -77,7 +77,7 @@ class MoviesRepositoryImpl(
      * @see BaseResult
      * @see tech.nullexdev.cinemood.service.domain.moodel.MoviesPage
      */
-    override fun getMovies(page: Int): Flow<BaseResult<tech.nullexdev.cinemood.service.domain.moodel.MoviesPage>> = flow {
+    override fun getMovies(page: Int): Flow<BaseResult<MoviesPage>> = flow {
         val result = remoteDataSource.fetchMovies(page)
         val baseResult = result.toBaseResult { responseDto ->
             responseDto.toDomainModel()
@@ -127,7 +127,7 @@ class MoviesRepositoryImpl(
      * @see [getMovies] for unfiltered movie listing
      * @see [BaseResult] for result handling patterns
      */
-    override fun searchMovies(query: String, page: Int): Flow<BaseResult<tech.nullexdev.cinemood.service.domain.moodel.MoviesPage>> = flow {
+    override fun searchMovies(query: String, page: Int): Flow<BaseResult<MoviesPage>> = flow {
         // Input validation
         require(query.isNotBlank()) { "Search query cannot be blank" }
         require(page > 0) { "Page number must be positive, got $page" }
