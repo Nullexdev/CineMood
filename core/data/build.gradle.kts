@@ -74,6 +74,7 @@ kotlin {
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.logging)
+                implementation(libs.koin.core)
             }
         }
 
@@ -81,6 +82,7 @@ kotlin {
             dependencies {
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.okhttp.logging.interceptor)
+                implementation(libs.chucker)
             }
         }
 
@@ -108,9 +110,4 @@ kotlin {
             }
         }
     }
-}
-
-dependencies {
-    "debugImplementation"(libs.chucker)
-    "releaseImplementation"(libs.chucker.no.op)
 }
