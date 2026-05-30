@@ -33,6 +33,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlin.stdlib)
                 api(libs.jetbrains.kotlinx.coroutines.core)
+                implementation(libs.androidx.lifecycle.viewmodel)
             }
         }
     }

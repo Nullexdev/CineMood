@@ -26,8 +26,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -42,9 +45,12 @@ import tech.nullexdev.cinemood.feature.favorite.FavoriteScreen
 import tech.nullexdev.cinemood.feature.home.HomeScreen
 import tech.nullexdev.cinemood.feature.search.SearchScreen
 import tech.nullexdev.cinemood.feature.settings.SettingsScreen
+import tech.nullexdev.cinemood.presentation.app.AppUiAction
+import tech.nullexdev.cinemood.presentation.app.AppViewModel
 import tech.nullexdev.cinemood.theme.MyKMPAppTheme
 import tech.nullexdev.cinemood.theme.ThemeState
 import kotlinx.serialization.modules.SerializersModule
+import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 
@@ -61,29 +67,40 @@ val navSerializationConfig = SavedStateConfiguration {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-@Preview
-fun App() {
+fun App(
+    viewModel: AppViewModel = koinViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val themeState = remember { ThemeState() }
     val backStack = rememberNavBackStack(
         configuration = navSerializationConfig,
-        Screen.Home,
+        uiState.currentScreen,
     )
-
+    LaunchedEffect(uiState.themeMode) {
+        themeState.themeMode.value = uiState.themeMode
+    }
+    LaunchedEffect(uiState.currentScreen) {
+        if (backStack.last() != uiState.currentScreen) {
+            backStack.clear()
+            backStack.add(uiState.currentScreen)
+        }
+    }
     MyKMPAppTheme(themeState = themeState) {
         Scaffold(
-            topBar = { CMTopAppBar() },
+            topBar = {
+                CMTopAppBar(
+                    onSearchClick = { viewModel.onAction(AppUiAction.SearchClicked) },
+                    onFavoriteClick = { viewModel.onAction(AppUiAction.FavoriteClicked) },
+                )
+            },
             bottomBar = {
                 CMNavigationBar(
-                    currentScreen = backStack.last(),
+                    currentScreen = uiState.currentScreen,
                     onNavigate = { screen ->
-                        if (backStack.last() != screen) {
-                            // Clear backstack and push the new screen for bottom nav
-                            backStack.clear()
-                            backStack.add(screen)
-                        }
-                    }
+                        viewModel.onAction(AppUiAction.BottomNavSelected(screen))
+                    },
                 )
-            }
+            },
         ) { innerPadding ->
             Column(
                 modifier = Modifier
@@ -113,15 +130,16 @@ fun App() {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
-fun CMTopAppBar() {
+fun CMTopAppBar(
+    onSearchClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
+) {
     TopAppBar(
         title = { Text("CineMood") },
         actions = {
             Row {
                 IconButton(
-                    onClick = {
-
-                    },
+                    onClick = onSearchClick,
                     shapes = IconButtonShapes(shape = CircleShape),
                     content = {
                         Row(
@@ -136,9 +154,7 @@ fun CMTopAppBar() {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
-                    onClick = {
-
-                    },
+                    onClick = onFavoriteClick,
                     shapes = IconButtonShapes(shape = CircleShape),
                     content = {
                         Row(
@@ -156,9 +172,15 @@ fun CMTopAppBar() {
     )
 }
 
+@Preview
+@Composable
+private fun AppPreview() {
+    App(viewModel = AppViewModel())
+}
+
 @Composable
 fun CMNavigationBar(
-    currentScreen: NavKey,
+    currentScreen: Screen,
     onNavigate: (Screen) -> Unit,
 ) {
     NavigationBar(
