@@ -1,18 +1,13 @@
 package tech.nullexdev.cinemood
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,9 +20,10 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
-import tech.nullexdev.cinemood.core.presentation.components.CMNavigationBar
+import tech.nullexdev.cinemood.core.presentation.components.CMNavigationRail
 import tech.nullexdev.cinemood.core.presentation.components.CMTopAppBar
 import tech.nullexdev.cinemood.core.navigation.Screen
+import tech.nullexdev.cinemood.core.presentation.components.CMNavigationBar
 import tech.nullexdev.cinemood.feature.favorite.FavoriteScreen
 import tech.nullexdev.cinemood.feature.home.HomeScreen
 import tech.nullexdev.cinemood.feature.search.SearchScreen
@@ -69,37 +65,53 @@ fun App(
         }
     }
     MyKMPAppTheme(themeState = themeState) {
-        Scaffold(
-            bottomBar = {
-                CMNavigationBar(
-                    currentScreen = uiState.currentScreen,
-                    onNavigate = { screen ->
-                        viewModel.onAction(AppUiAction.BottomNavSelected(screen))
-                    },
-                )
-            },
-        ) { innerPadding ->
-            val bottomPadding = innerPadding.calculateBottomPadding()
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val isHorizontal = maxWidth > maxHeight
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = bottomPadding)
-            ) {
-                NavDisplay(
-                    backStack = backStack,
-                    onBack = {
-                        if (backStack.size > 1) {
-                            backStack.removeLast()
-                        }
-                    },
-                    entryProvider = entryProvider {
-                        entry<Screen.Home> { HomeScreen() }
-                        entry<Screen.Search> { SearchScreen() }
-                        entry<Screen.Favorite> { FavoriteScreen() }
-                        entry<Screen.Settings> { SettingsScreen() }
+            Scaffold(
+                bottomBar = {
+                    if (!isHorizontal) {
+                        CMNavigationBar(
+                            currentScreen = uiState.currentScreen,
+                            onNavigate = { screen: Screen ->
+                                viewModel.onAction(AppUiAction.BottomNavSelected(screen))
+                            },
+                        )
                     }
-                )
+                },
+                contentWindowInsets = WindowInsets(0, 0, 0, 0)
+            ) { innerPadding ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = innerPadding.calculateBottomPadding())
+                ) {
+                    if (isHorizontal) {
+                        CMNavigationRail(
+                            currentScreen = uiState.currentScreen,
+                            onNavigate = { screen: Screen ->
+                                viewModel.onAction(AppUiAction.BottomNavSelected(screen))
+                            }
+                        )
+                    }
+
+                    Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        NavDisplay(
+                            backStack = backStack,
+                            onBack = {
+                                if (backStack.size > 1) {
+                                    backStack.removeLast()
+                                }
+                            },
+                            entryProvider = entryProvider {
+                                entry<Screen.Home> { HomeScreen() }
+                                entry<Screen.Search> { SearchScreen() }
+                                entry<Screen.Favorite> { FavoriteScreen() }
+                                entry<Screen.Settings> { SettingsScreen() }
+                            }
+                        )
+                    }
+                }
             }
         }
     }

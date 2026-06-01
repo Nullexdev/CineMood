@@ -1,76 +1,170 @@
-This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
+# 🎬 CineMood
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+> **Discover Movies By Your Mood**
 
-* [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
-
-### Build and Run Android Application
-
-To build and run the development version of the Android app, use the run configuration from the run widget
-in your IDE’s toolbar or build it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :shared:assembleDebug
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :shared:assembleDebug
-  ```
-
-### Build and Run Desktop (JVM) Application
-
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
-- on macOS/Linux
-  ```shell
-  ./gradlew :shared:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :shared:run
-  ```
-
-### Build and Run Web Application
-
-To build and run the development version of the web app, use the run configuration from the run widget
-in your IDE's toolbar or run it directly from the terminal:
-- for the Wasm target (faster, modern browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :shared:wasmJsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :shared:wasmJsBrowserDevelopmentRun
-    ```
-- for the JS target (slower, supports older browsers):
-  - on macOS/Linux
-    ```shell
-    ./gradlew :shared:jsBrowserDevelopmentRun
-    ```
-  - on Windows
-    ```shell
-    .\gradlew.bat :shared:jsBrowserDevelopmentRun
-    ```
-
-### Build and Run iOS Application
-
-To build and run the development version of the iOS app, use the run configuration from the run widget
-in your IDE’s toolbar or open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+CineMood is a **Kotlin Multiplatform** application for discovering Iranian movies. Built with Compose Multiplatform, it runs natively on Android, iOS, Desktop, Web (JS), and WebAssembly from a single shared codebase.
 
 ---
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+## 📱 Platforms
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+| Platform | Status |
+|---|---|
+| Android | ✅ |
+| iOS | ✅ |
+| Desktop (JVM) | ✅ |
+| Web (JS) | ✅ |
+| Web (Wasm) | ✅ |
+
+---
+
+## 🏗️ Architecture
+
+The project follows a **multi-module clean architecture** pattern with clear separation of concerns:
+
+```
+CineMood/
+├── androidApp/          # Android entry point
+├── iosApp/              # iOS entry point (Xcode project)
+├── desktopApp/          # Desktop (JVM) entry point
+├── webApp/              # Web entry point
+├── shared/              # Shared KMP module (UI + DI wiring)
+├── core/
+│   ├── domain/          # Base domain models & interfaces
+│   ├── navigation/      # Navigation primitives
+│   └── presentation/    # Shared UI components (MovieCard, TopAppBar, etc.)
+├── feature/
+│   ├── home/            # Home screen — movie list with pagination
+│   ├── search/          # Search screen
+│   ├── favorite/        # Favorites screen
+│   └── settings/        # Settings screen
+└── service/
+    ├── domain/          # Service-level domain logic
+    └── data/
+        └── iranianMoviesApi/  # API data source implementation
+```
+
+### Layer Responsibilities
+
+- **`core/domain`** — Base entities, repository interfaces, use cases
+- **`core/presentation`** — Reusable Compose components shared across features
+- **`core/navigation`** — Navigation contracts and route definitions
+- **`feature/*`** — Self-contained feature modules (ViewModel, UI, UiState, UiAction)
+- **`service/data`** — Network layer (Ktor-based API client for Iranian movies)
+- **`shared`** — Composes all modules together; configures Koin DI for each platform
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Library |
+|---|---|
+| UI | Compose Multiplatform |
+| Architecture | MVVM + UiState/UiAction |
+| DI | Koin (koin-compose, koin-compose-viewmodel) |
+| Navigation | Navigation3 |
+| Async | Kotlin Coroutines + Flow |
+| Serialization | Kotlinx Serialization |
+| Lifecycle | AndroidX Lifecycle (collectAsStateWithLifecycle) |
+
+---
+
+## ✨ Features
+
+- 🎥 Browse Iranian movies list with infinite scroll / load-more pagination
+- 🔍 Search movies
+- ❤️ Save favorites
+- ⚙️ Settings
+- 🌙 Dark / Light theme with Material 3 color scheme
+- 📱 Fully adaptive UI across all platforms
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Android Studio Hedgehog or later (with KMP plugin)
+- Xcode 15+ (for iOS)
+- JDK 11+
+
+### Clone the repository
+
+```bash
+git clone https://github.com/Alimmzdev/CineMood.git
+cd CineMood
+```
+
+### Run on Android
+
+```bash
+# macOS / Linux
+./gradlew :androidApp:installDebug
+
+# Windows
+.\gradlew.bat :androidApp:installDebug
+```
+
+### Run on Desktop
+
+```bash
+# macOS / Linux
+./gradlew :desktopApp:run
+
+# Windows
+.\gradlew.bat :desktopApp:run
+```
+
+### Run on Web (Wasm — recommended)
+
+```bash
+# macOS / Linux
+./gradlew :webApp:wasmJsBrowserDevelopmentRun
+
+# Windows
+.\gradlew.bat :webApp:wasmJsBrowserDevelopmentRun
+```
+
+### Run on Web (JS — broader browser support)
+
+```bash
+# macOS / Linux
+./gradlew :webApp:jsBrowserDevelopmentRun
+
+# Windows
+.\gradlew.bat :webApp:jsBrowserDevelopmentRun
+```
+
+### Run on iOS
+
+Open `iosApp/iosApp.xcodeproj` in Xcode and run on a simulator or device.
+
+---
+
+## 📂 Module Graph (simplified)
+
+```
+androidApp / iosApp / desktopApp / webApp
+        └──► shared
+               ├──► core:domain
+               ├──► core:navigation
+               ├──► core:presentation
+               ├──► feature:home
+               ├──► feature:search
+               ├──► feature:favorite
+               ├──► feature:settings
+               ├──► service:domain
+               └──► service:data:iranianMoviesApi
+```
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+
+---
+
+## 📄 License
+
+This project is open source. See [LICENSE](LICENSE) for details.
