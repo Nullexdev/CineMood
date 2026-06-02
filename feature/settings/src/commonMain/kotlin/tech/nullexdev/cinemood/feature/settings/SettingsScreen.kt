@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import tech.nullexdev.cinemood.feature.settings.presentation.SettingsThemeMode
+import tech.nullexdev.cinemood.core.domain.entity.ThemeMode
 import tech.nullexdev.cinemood.feature.settings.presentation.SettingsUiAction
 import tech.nullexdev.cinemood.feature.settings.presentation.SettingsViewModel
 import org.koin.compose.viewmodel.koinViewModel
@@ -38,7 +38,7 @@ fun SettingsScreen(
             text = "Theme: ${uiState.themeMode.name}",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        SettingsThemeMode.entries.forEach { mode ->
+        ThemeMode.entries.forEach { mode ->
             TextButton(
                 onClick = { viewModel.onAction(SettingsUiAction.ThemeModeSelected(mode)) },
                 modifier = Modifier.fillMaxWidth(),

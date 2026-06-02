@@ -13,17 +13,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 
-class ThemeState {
-    enum class ThemeMode {
-        LIGHT, DARK, SYSTEM
-    }
+import tech.nullexdev.cinemood.core.domain.entity.ThemeMode
 
+class ThemeState {
     private val _themeMode = mutableStateOf(ThemeMode.SYSTEM)
     val themeMode: MutableState<ThemeMode> = _themeMode
-
-//    fun setThemeMode(mode: ThemeMode) {
-//        _themeMode.value = mode
-//    }
 
     @Composable
     fun isDarkTheme(): Boolean {

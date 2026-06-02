@@ -1,5 +1,6 @@
 package tech.nullexdev.cinemood.di
 
+import tech.nullexdev.cinemood.core.data.di.coreDataModule
 import tech.nullexdev.cinemood.feature.favorite.di.favoriteModule
 import tech.nullexdev.cinemood.feature.home.di.homeModule
 import tech.nullexdev.cinemood.feature.search.di.searchModule
@@ -34,6 +35,7 @@ fun initKoin(appDeclaration: KoinAppDeclaration = {}) {
     startKoin {
         appDeclaration()
         modules(
+            coreDataModule,
             iranianMoviesApiDataModule,
             domainModule,
             presentationModule,

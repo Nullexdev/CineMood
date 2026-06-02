@@ -1,13 +1,32 @@
 package tech.nullexdev.cinemood.feature.settings.presentation
 
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import tech.nullexdev.cinemood.core.domain.presentation.mvi.MviViewModel
+import tech.nullexdev.cinemood.core.domain.repository.ThemeRepository
 
-class SettingsViewModel : MviViewModel<SettingsUiState, SettingsUiAction>(
+class SettingsViewModel(
+    private val themeRepository: ThemeRepository,
+) : MviViewModel<SettingsUiState, SettingsUiAction>(
     initialState = SettingsUiState(),
 ) {
+    init {
+        themeRepository.themeMode
+            .onEach { mode ->
+                updateState { copy(themeMode = mode) }
+            }
+            .launchIn(viewModelScope)
+    }
+
     override fun onAction(action: SettingsUiAction) {
         when (action) {
-            is SettingsUiAction.ThemeModeSelected -> updateState { copy(themeMode = action.themeMode) }
+            is SettingsUiAction.ThemeModeSelected -> {
+                viewModelScope.launch {
+                    themeRepository.setThemeMode(action.themeMode)
+                }
+            }
             is SettingsUiAction.NotificationsToggled -> updateState { copy(notificationsEnabled = action.enabled) }
         }
     }

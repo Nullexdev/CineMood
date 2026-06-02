@@ -120,5 +120,5 @@ fun App(
 @Preview
 @Composable
 private fun AppPreview() {
-    App(viewModel = AppViewModel())
+    // App() // Koin might not be initialized in preview
 }
