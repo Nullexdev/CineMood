@@ -3,9 +3,7 @@ package tech.nullexdev.cinemood.feature.search
 import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -33,7 +31,7 @@ fun SearchScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -60,15 +58,18 @@ fun SearchScreen(
             )
         }
     ) { innerPaddings ->
-        LazyColumn(
-            state = listState,
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 300.dp),
+            state = gridState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = innerPaddings.calculateTopPadding()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             // 1. Search Bar
-            stickyHeader {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = MaterialTheme.colorScheme.surface,
@@ -110,14 +111,14 @@ fun SearchScreen(
             }
 
             // 2. Filters
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                     SearchFilters()
                 }
             }
 
             // 3. State-aware Content
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                     AnimatedContent(
                         targetState = state,
@@ -162,7 +163,7 @@ fun SearchScreen(
                 }
             }
 
-            // 4. Results List (Flattened into the same LazyColumn)
+            // 4. Results List
             if (!state.isLoading && state.movies.isNotEmpty()) {
                 items(
                     items = state.movies,

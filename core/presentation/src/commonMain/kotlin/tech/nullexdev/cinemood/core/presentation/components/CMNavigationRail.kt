@@ -29,7 +29,6 @@ fun CMNavigationRail(
     val railWidth by animateDpAsState(targetValue = if (isExpanded) 200.dp else 72.dp)
     val primaryColor = MaterialTheme.colorScheme.primary
     
-    // Using a Surface for the background
     Surface(
         modifier = modifier
             .fillMaxHeight()
@@ -51,7 +50,6 @@ fun CMNavigationRail(
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = primaryColor
                 )
             }
 

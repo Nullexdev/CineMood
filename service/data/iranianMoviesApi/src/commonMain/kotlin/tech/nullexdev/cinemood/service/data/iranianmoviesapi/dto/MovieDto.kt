@@ -9,8 +9,8 @@ data class MovieDto(
     val id: Int,
     val title: String,
     val poster: String,
-    val genres: List<String>,
-    val images: List<String>
+    val genres: List<String> = emptyList(),
+    val images: List<String> = emptyList()
 ) : DomainConvertible<Movie> {
     override fun toDomainModel(): Movie =
         Movie(

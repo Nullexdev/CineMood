@@ -1,9 +1,7 @@
 package tech.nullexdev.cinemood.feature.home
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,7 +22,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
@@ -57,15 +55,17 @@ fun HomeScreen(
                 }
 
                 else -> {
-                    LazyColumn(
-                        state = listState,
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 300.dp),
+                        state = gridState,
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
                             top = innerPadding.calculateTopPadding() + 8.dp,
                             bottom = innerPadding.calculateBottomPadding() + 8.dp
                         ),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.fillMaxSize(),
                     ) {
                         items(uiState.movies, key = { it.id }) { movie ->
@@ -73,11 +73,11 @@ fun HomeScreen(
                         }
 
                         if (uiState.hasNextPage) {
-                            item {
+                            item(span = { GridItemSpan(maxLineSpan) }) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(vertical = 8.dp),
+                                        .padding(vertical = 16.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     if (uiState.isLoading) {

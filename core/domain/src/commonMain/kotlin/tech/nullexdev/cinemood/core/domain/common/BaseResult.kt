@@ -81,12 +81,15 @@ sealed class BaseResult<out T> {
 /**
  * Converts a standard Kotlin Result to BaseResult.
  *
+ * @param errorMapper Optional function to map a Throwable to a user-friendly error message
  * @return BaseResult representation of the Result
  */
-fun <T> Result<T>.toBaseResult(): BaseResult<T> {
+fun <T> Result<T>.toBaseResult(
+    errorMapper: (Throwable) -> String? = { null }
+): BaseResult<T> {
     return fold(
         onSuccess = { BaseResult.Success(it) },
-        onFailure = { BaseResult.Error(it as Exception) }
+        onFailure = { BaseResult.Error(it as Exception, errorMapper(it)) }
     )
 }
 
@@ -100,6 +103,7 @@ fun <T> Result<T>.toBaseResult(): BaseResult<T> {
  *
  * @param T The input type of the success value from the [Result]
  * @param R The output type after applying the transformation
+ * @param errorMapper Optional function to map a Throwable to a user-friendly error message
  * @param transform A suspending function that transforms a value of type T to type R.
  *                  This function is only called if the [Result] is successful.
  * @return [tech.nullexdev.cinemood.core.domain.common.BaseResult.Success] containing the transformed value if the [Result] is successful,
@@ -134,10 +138,13 @@ fun <T> Result<T>.toBaseResult(): BaseResult<T> {
  *
  * @see toBaseResult for the version without transformation
  */
-fun <T, R> Result<T>.toBaseResult(transform: (T) -> R): BaseResult<R> {
+fun <T, R> Result<T>.toBaseResult(
+    errorMapper: (Throwable) -> String? = { null },
+    transform: (T) -> R
+): BaseResult<R> {
     return fold(
         onSuccess = { BaseResult.Success(transform(it)) },
-        onFailure = { BaseResult.Error(it as Exception) }
+        onFailure = { BaseResult.Error(it as Exception, errorMapper(it)) }
     )
 }
 

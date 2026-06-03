@@ -38,8 +38,18 @@ class FavoriteViewModel : MviViewModel<FavoriteUiState, FavoriteUiAction>(
     }
     private fun placeholderFavorites(): List<FavoriteMovieItem> {
         return listOf(
-            FavoriteMovieItem(id = 1, title = "Sample favorite 1"),
-            FavoriteMovieItem(id = 2, title = "Sample favorite 2"),
+            FavoriteMovieItem(
+                id = 1,
+                title = "Inception",
+                poster = "https://image.tmdb.org/t/p/w500/9gk7Fn9sVAsS9Te6B1pU3O9sbUC.jpg",
+                genres = listOf("Action", "Sci-Fi")
+            ),
+            FavoriteMovieItem(
+                id = 2,
+                title = "The Dark Knight",
+                poster = "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDp92SMRYwT6C7R2R9V.jpg",
+                genres = listOf("Action", "Crime")
+            ),
         )
     }
 }

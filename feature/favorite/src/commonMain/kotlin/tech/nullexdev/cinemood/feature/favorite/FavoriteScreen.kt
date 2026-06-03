@@ -2,20 +2,19 @@ package tech.nullexdev.cinemood.feature.favorite
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import tech.nullexdev.cinemood.feature.favorite.presentation.FavoriteUiAction
+import tech.nullexdev.cinemood.core.presentation.components.MovieCard
 import tech.nullexdev.cinemood.feature.favorite.presentation.FavoriteViewModel
+import tech.nullexdev.cinemood.service.domain.moodel.Movie
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -23,50 +22,60 @@ fun FavoriteScreen(
     viewModel: FavoriteViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val gridState = rememberLazyGridState()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .background(MaterialTheme.colorScheme.surface)
             .statusBarsPadding(),
     ) {
         when {
             uiState.isLoading -> {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
+
             else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 300.dp),
+                    state = gridState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Text(
-                        text = "Favorite",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                    Text(
-                        text = "${uiState.favorites.size} saved",
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                    uiState.errorMessage?.let { message ->
-                        Text(text = message, color = MaterialTheme.colorScheme.error)
-                    }
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        items(uiState.favorites, key = { it.id }) { movie ->
-                            TextButton(
-                                onClick = { viewModel.onAction(FavoriteUiAction.RemoveFavorite(movie)) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        Column {
+                            Text(
+                                text = "Favorites",
+                                style = MaterialTheme.typography.headlineMedium,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text = "${uiState.favorites.size} saved",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            uiState.errorMessage?.let { message ->
                                 Text(
-                                    text = movie.title,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    text = message,
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(top = 8.dp)
                                 )
                             }
                         }
+                    }
+
+                    items(uiState.favorites, key = { it.id }) { favorite ->
+                        MovieCard(
+                            movie = Movie(
+                                id = favorite.id,
+                                title = favorite.title,
+                                poster = favorite.poster,
+                                genres = favorite.genres,
+                                images = emptyList()
+                            )
+                        )
                     }
                 }
             }
