@@ -1,179 +1,170 @@
 package tech.nullexdev.cinemood.feature.search
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import tech.nullexdev.cinemood.core.presentation.components.ErrorState
 import tech.nullexdev.cinemood.core.presentation.components.MovieCard
 import tech.nullexdev.cinemood.feature.search.presentation.SearchUiAction
 import tech.nullexdev.cinemood.feature.search.presentation.SearchViewModel
+import tech.nullexdev.cinemood.service.domain.moodel.Movie
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SearchScreen(
     viewModel: SearchViewModel = koinViewModel(),
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    onMovieClick: (Movie) -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val gridState = rememberLazyGridState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors().copy(
-                    scrolledContainerColor =  MaterialTheme.colorScheme.surface,
-                ),
-                title = {
-                    Column {
+            Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface)) {
+                LargeTopAppBar(
+                    title = {
                         Text(
-                            text = "Discover",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            "Search",
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1).sp
                         )
-                        Text(
-                            text = "Find your next favorite movie",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior
-            )
-        }
-    ) { innerPaddings ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 300.dp),
-            state = gridState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = innerPaddings.calculateTopPadding()),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            // 1. Search Bar
-            item(span = { GridItemSpan(maxLineSpan) }) {
+                    },
+                    scrollBehavior = scrollBehavior
+                )
+                
+                // Expressive Search Bar
                 Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ) {
-                    OutlinedTextField(
+                    TextField(
                         value = state.query,
-                        onValueChange = {
-                            viewModel.onAction(SearchUiAction.QueryChanged(it))
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        shape = RoundedCornerShape(28.dp),
-                        singleLine = true,
-                        placeholder = { Text("Search movies...") },
-                        leadingIcon = {
-                            Icon(imageVector = Icons.Default.Search, contentDescription = null)
-                        },
+                        onValueChange = { viewModel.onAction(SearchUiAction.QueryChanged(it)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("Search titles, actors, directors...") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         trailingIcon = {
-                            AnimatedVisibility(
-                                visible = state.query.isNotEmpty(),
-                                enter = fadeIn() + scaleIn(),
-                                exit = fadeOut() + scaleOut()
-                            ) {
+                            if (state.query.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.onAction(SearchUiAction.ClearQuery) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Clear"
-                                    )
+                                    Icon(Icons.Default.Close, contentDescription = "Clear")
                                 }
                             }
                         },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.surface,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                        )
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                        ),
+                        singleLine = true
                     )
                 }
             }
-
-            // 2. Filters
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                    SearchFilters()
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // State-aware Content
+            if (!state.hasSearched && state.query.isEmpty()) {
+                item {
+                    RecentSearches()
                 }
-            }
-
-            // 3. State-aware Content
-            item(span = { GridItemSpan(maxLineSpan) }) {
-                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                item {
+                    PopularGenres()
+                }
+            } else {
+                item {
                     AnimatedContent(
                         targetState = state,
-                        transitionSpec = {
-                            fadeIn() togetherWith fadeOut()
-                        },
                         label = "SearchState"
                     ) { targetState ->
-                        Column(modifier = Modifier.fillMaxWidth()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
                             when {
-                                targetState.isLoading -> {
-                                    LoadingState()
-                                }
-
+                                targetState.isLoading -> LoadingState()
                                 targetState.errorMessage != null -> {
                                     ErrorState(
                                         message = targetState.errorMessage,
-                                        onRetry = { viewModel.onAction(SearchUiAction.SearchSubmitted) },
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp)
+                                        onRetry = { viewModel.onAction(SearchUiAction.SearchSubmitted) }
                                     )
                                 }
-
-                                targetState.hasSearched && targetState.movies.isEmpty() -> {
-                                    EmptySearchState()
-                                }
-
-                                targetState.movies.isNotEmpty() -> {
-                                    Text(
-                                        text = "${targetState.movies.size} results",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    )
-                                }
-
+                                targetState.hasSearched && targetState.movies.isEmpty() -> EmptySearchState()
                                 else -> {
-                                    WelcomeState()
+                                    if (targetState.movies.isNotEmpty()) {
+                                        Text(
+                                            text = "Search Results",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(vertical = 8.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            // 4. Results List
-            if (!state.isLoading && state.movies.isNotEmpty()) {
-                items(
-                    items = state.movies,
-                    key = { it.id }
-                ) { movie ->
-                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        MovieCard(
-                            movie = movie,
-                            modifier = Modifier.animateItem()
-                        )
+                // Results Grid
+                state.movies.chunked(2).forEach { rowMovies ->
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            rowMovies.forEach { movie ->
+                                Box(modifier = Modifier.weight(1f)) {
+                                    MovieCard(
+                                        movie = movie,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        onClick = { onMovieClick(movie) }
+                                    )
+                                }
+                            }
+                            if (rowMovies.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
@@ -182,29 +173,87 @@ fun SearchScreen(
 }
 
 @Composable
-private fun SearchFilters() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+private fun RecentSearches() {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        FilterChip(
-            selected = true,
-            onClick = {},
-            label = { Text("Popular") },
-            shape = RoundedCornerShape(12.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "Recent Searches",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            TextButton(onClick = {}) {
+                Text("Clear All")
+            }
+        }
+        
+        val recentItems = listOf("Interstellar", "Dark Knight", "Inception")
+        recentItems.forEach { item ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Icon(
+                    Icons.Default.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+                Text(
+                    text = item,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    Icons.AutoMirrored.Filled.TrendingUp,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PopularGenres() {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text(
+            "Popular Categories",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
         )
-        FilterChip(
-            selected = false,
-            onClick = {},
-            label = { Text("Trending") },
-            shape = RoundedCornerShape(12.dp)
-        )
-        FilterChip(
-            selected = false,
-            onClick = {},
-            label = { Text("Top Rated") },
-            shape = RoundedCornerShape(12.dp)
-        )
+        
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            val genres = listOf("Action", "Drama", "Sci-Fi", "Comedy", "Horror", "Thriller", "Anime")
+            genres.forEach { genre ->
+                SuggestionChip(
+                    onClick = { },
+                    label = { Text(genre) },
+                    shape = RoundedCornerShape(12.dp),
+                    border = null,
+                    colors = SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -216,7 +265,7 @@ private fun LoadingState() {
             .padding(vertical = 64.dp),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator()
+        CircularProgressIndicator(strokeCap = androidx.compose.ui.graphics.StrokeCap.Round)
     }
 }
 
@@ -226,40 +275,34 @@ private fun EmptySearchState() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Icon(
-            imageVector = Icons.Default.Movie,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "No movies found", style = MaterialTheme.typography.titleMedium)
-        Text(text = "Try another movie title", color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
-
-@Composable
-private fun WelcomeState() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Icon(
-            imageVector = Icons.Default.Movie,
-            contentDescription = null,
-            modifier = Modifier.size(96.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Search Movies",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
-        Text(text = "Start typing to discover movies", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Surface(
+            modifier = Modifier.size(120.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.Movie,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "No movies found",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Try another movie title or keywords",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }

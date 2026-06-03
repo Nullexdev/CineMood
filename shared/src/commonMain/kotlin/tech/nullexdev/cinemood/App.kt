@@ -1,5 +1,6 @@
 package tech.nullexdev.cinemood
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -14,18 +15,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import org.koin.compose.viewmodel.koinViewModel
-import tech.nullexdev.cinemood.core.presentation.components.CMNavigationRail
-import tech.nullexdev.cinemood.core.presentation.components.CMTopAppBar
 import tech.nullexdev.cinemood.core.navigation.Screen
 import tech.nullexdev.cinemood.core.presentation.components.CMNavigationBar
+import tech.nullexdev.cinemood.core.presentation.components.CMNavigationRail
 import tech.nullexdev.cinemood.feature.favorite.FavoriteScreen
 import tech.nullexdev.cinemood.feature.home.HomeScreen
+import tech.nullexdev.cinemood.feature.home.MovieDetailScreen
 import tech.nullexdev.cinemood.feature.search.SearchScreen
 import tech.nullexdev.cinemood.feature.settings.SettingsScreen
 import tech.nullexdev.cinemood.presentation.app.AppUiAction
@@ -40,6 +42,7 @@ val navSerializationConfig = SavedStateConfiguration {
             subclass(Screen.Search::class)
             subclass(Screen.Favorite::class)
             subclass(Screen.Settings::class)
+            subclass(Screen.MovieDetail::class)
         }
     }
 }
@@ -96,20 +99,74 @@ fun App(
                     }
 
                     Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                        NavDisplay(
-                            backStack = backStack,
-                            onBack = {
-                                if (backStack.size > 1) {
-                                    backStack.removeLast()
+                        SharedTransitionLayout {
+                            NavDisplay(
+                                backStack = backStack,
+                                onBack = {
+                                    if (backStack.size > 1) {
+                                        backStack.removeLast()
+                                    }
+                                },
+                                entryProvider = entryProvider {
+                                entry<Screen.Home> {
+                                    HomeScreen(
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        onMovieClick = { movie ->
+                                            backStack.add(
+                                                Screen.MovieDetail(
+                                                    movieId = movie.id,
+                                                    movieTitle = movie.title,
+                                                    moviePoster = movie.poster
+                                                )
+                                            )
+                                        }
+                                    )
                                 }
-                            },
-                            entryProvider = entryProvider {
-                                entry<Screen.Home> { HomeScreen() }
-                                entry<Screen.Search> { SearchScreen() }
-                                entry<Screen.Favorite> { FavoriteScreen() }
+                                entry<Screen.Search> {
+                                    SearchScreen(
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        onMovieClick = { movie ->
+                                            backStack.add(
+                                                Screen.MovieDetail(
+                                                    movieId = movie.id,
+                                                    movieTitle = movie.title,
+                                                    moviePoster = movie.poster
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                                entry<Screen.Favorite> {
+                                    FavoriteScreen(
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        onMovieClick = { movie ->
+                                            backStack.add(
+                                                Screen.MovieDetail(
+                                                    movieId = movie.id,
+                                                    movieTitle = movie.title,
+                                                    moviePoster = movie.poster
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
                                 entry<Screen.Settings> { SettingsScreen() }
-                            }
-                        )
+                                entry<Screen.MovieDetail> { key ->
+                                    MovieDetailScreen(
+                                        movieId = key.movieId,
+                                        movieTitle = key.movieTitle,
+                                        moviePoster = key.moviePoster,
+                                        sharedTransitionScope = this@SharedTransitionLayout,
+                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        onBack = { backStack.removeLast() }
+                                    )
+                                }
+                                }
+                            )
+                        }
                     }
                 }
             }

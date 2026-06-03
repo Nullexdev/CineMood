@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.androidLint)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.androidx.room)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -69,39 +72,83 @@ kotlin {
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.logging)
                 implementation(libs.koin.core)
+                implementation(libs.sqldelight.coroutines.extensions)
+            }
+        }
+
+        val roomMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.androidx.room.runtime)
+                implementation(libs.androidx.sqlite.bundled)
+            }
+        }
+
+        val webMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.sqldelight.web.worker.driver)
+                implementation(devNpm("sql.js", "1.12.0"))
             }
         }
 
         androidMain {
+            dependsOn(roomMain)
             dependencies {
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.okhttp.logging.interceptor)
                 implementation(libs.chucker)
+                implementation(libs.sqldelight.android.driver)
             }
         }
 
         iosMain {
+            dependsOn(roomMain)
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                implementation(libs.sqldelight.ios.driver)
             }
         }
 
         jvmMain {
+            dependsOn(roomMain)
             dependencies {
                 implementation("io.ktor:ktor-client-java:${libs.versions.ktor.get()}")
+                implementation(libs.sqldelight.sqlite.driver)
             }
         }
 
         jsMain {
+            dependsOn(webMain)
             dependencies {
                 implementation("io.ktor:ktor-client-js:${libs.versions.ktor.get()}")
             }
         }
 
         wasmJsMain {
+            dependsOn(webMain)
             dependencies {
                 implementation("io.ktor:ktor-client-js:${libs.versions.ktor.get()}")
             }
+        }
+    }
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+sqldelight {
+    databases {
+        create("CineMoodDatabase") {
+            packageName.set("tech.nullexdev.cinemood.core.data.db")
         }
     }
 }

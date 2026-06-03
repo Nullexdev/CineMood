@@ -1,0 +1,16 @@
+CREATE TABLE favoriteMovie (
+  id INTEGER PRIMARY KEY NOT NULL,
+  title TEXT NOT NULL,
+  posterPath TEXT,
+  overview TEXT NOT NULL
+);
+
+insertMovie:
+INSERT OR REPLACE INTO favoriteMovie(id, title, posterPath, overview)
+VALUES (?, ?, ?, ?);
+
+selectAll:
+SELECT * FROM favoriteMovie;
+
+deleteById:
+DELETE FROM favoriteMovie WHERE id = ?;

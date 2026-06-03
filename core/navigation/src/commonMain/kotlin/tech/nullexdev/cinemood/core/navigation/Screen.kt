@@ -13,4 +13,11 @@ sealed interface Screen : NavKey {
     data object Favorite : Screen
     @Serializable
     data object Settings : Screen
+
+    @Serializable
+    data class MovieDetail(
+        val movieId: Int,
+        val movieTitle: String,
+        val moviePoster: String
+    ) : Screen
 }

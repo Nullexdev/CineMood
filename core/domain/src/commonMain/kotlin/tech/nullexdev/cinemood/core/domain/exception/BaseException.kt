@@ -11,29 +11,29 @@ class NetworkException(
     message: String? = "Network error occurred",
     code: Int? = null,
     cause: Throwable? = null
-) : tech.nullexdev.cinemood.core.domain.exception.BaseException(message, code, cause)
+) : BaseException(message, code, cause)
 
 /** Server-side API errors (4xx, 5xx) */
 class ApiException(
     val httpCode: Int,
     message: String? = "API error",
     cause: Throwable? = null
-) : tech.nullexdev.cinemood.core.domain.exception.BaseException(message, httpCode, cause)
+) : BaseException(message, httpCode, cause)
 
 /** Local database errors */
 class DatabaseException(
     message: String? = "Database error",
     cause: Throwable? = null
-) : tech.nullexdev.cinemood.core.domain.exception.BaseException(message, cause = cause)
+) : BaseException(message, cause = cause)
 
 /** Business logic violations (e.g., invalid input, condition fails) */
 class BusinessException(
     message: String? = "Business rule violation",
     cause: Throwable? = null
-) : tech.nullexdev.cinemood.core.domain.exception.BaseException(message, cause = cause)
+) : BaseException(message, cause = cause)
 
 /** Unknown or unexpected errors */
 class UnknownException(
     message: String? = "Unknown error",
     cause: Throwable? = null
-) : tech.nullexdev.cinemood.core.domain.exception.BaseException(message, cause = cause)
+) : BaseException(message, cause = cause)

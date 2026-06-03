@@ -5,31 +5,34 @@ android-minSdk = "24"
 android-targetSdk = "36"
 androidx-activity = "1.13.0"
 androidx-appcompat = "1.7.1"
-androidx-core = "1.18.0"
+androidx-core = "1.19.0"
 androidx-espresso = "3.7.0"
 androidx-lifecycle = "2.10.0"
 androidx-testExt = "1.3.0"
 composeHotReload = "1.1.1"
-composeMultiplatform = "1.11.0"
+composeMultiplatform = "1.11.1"
 junit = "4.13.2"
-kotlin = "2.3.21"
-kotlinx-coroutines = "1.10.2"
+kotlin = "2.4.0"
+kotlinx-coroutines = "1.11.0"
 kotlinxCoroutinesCore = "1.11.0"
-kotlinxSerializationJson = "1.9.0"
+kotlinxSerializationJson = "1.11.0"
 chucker = "4.3.1"
 material3 = "1.10.0-alpha05"
-kotlinStdlib = "2.3.21"
+kotlinStdlib = "2.4.0"
 materialIconsExtended = "1.7.3"
 runner = "1.7.0"
 core = "1.7.0"
-jetbrainsKotlinJvm = "2.3.21"
 ktor = "3.5.0"
 okhttp = "5.3.2"
 koin = "4.2.1"
-kotlinxSerialization = "2.3.21"
-kotlin-wrappers = "2026.5.6"
-multiplatform-nav3-ui = "1.0.0-alpha05"
+kotlinxSerialization = "2.4.0"
+kotlin-wrappers = "2026.6.1"
+multiplatform-nav3-ui = "1.1.1"
 coil = "3.4.0"
+androidx-room = "2.8.4"
+androidx-sqlite = "2.6.2"
+ksp = "2.3.9"
+sqldelight = "2.3.2"
 
 # Navigation 3
 [libraries]
@@ -82,6 +85,15 @@ koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", ver
 # Navigation 3
 navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "multiplatform-nav3-ui" }
 
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
+sqldelight-android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqldelight" }
+sqldelight-ios-driver = { module = "app.cash.sqldelight:native-driver", version.ref = "sqldelight" }
+sqldelight-sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqldelight" }
+sqldelight-web-worker-driver = { module = "app.cash.sqldelight:web-worker-driver", version.ref = "sqldelight" }
+sqldelight-coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqldelight" }
+
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }
@@ -91,5 +103,7 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 androidLint = { id = "com.android.lint", version.ref = "agp" }
-jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlinxSerialization" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+androidx-room = { id = "androidx.room", version.ref = "androidx-room" }
+sqldelight = { id = "app.cash.sqldelight", version.ref = "sqldelight" }

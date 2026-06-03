@@ -8,8 +8,11 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.androidMultiplatformLibrary) apply false
     alias(libs.plugins.androidLint) apply false
-    alias(libs.plugins.jetbrainsKotlinJvm) apply false
+    alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinxSerialization) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.androidx.room) apply false
+    alias(libs.plugins.sqldelight) apply false
 }
 
 val wasmYarnLockPath: String = "${rootProject.layout.buildDirectory.get().asFile.absolutePath}/wasm/yarn.lock"

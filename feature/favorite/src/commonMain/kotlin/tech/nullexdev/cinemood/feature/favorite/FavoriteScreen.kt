@@ -1,84 +1,164 @@
 package tech.nullexdev.cinemood.feature.favorite
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.*
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.HeartBroken
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.koin.compose.viewmodel.koinViewModel
 import tech.nullexdev.cinemood.core.presentation.components.MovieCard
 import tech.nullexdev.cinemood.feature.favorite.presentation.FavoriteViewModel
 import tech.nullexdev.cinemood.service.domain.moodel.Movie
-import org.koin.compose.viewmodel.koinViewModel
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun FavoriteScreen(
     viewModel: FavoriteViewModel = koinViewModel(),
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    onMovieClick: (Movie) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val gridState = rememberLazyGridState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .statusBarsPadding(),
-    ) {
-        when {
-            uiState.isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            LargeTopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            "Favorites",
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1).sp,
+                        )
+                        if (uiState.favorites.isNotEmpty()) {
+                            Text(
+                                "${uiState.favorites.size} items saved",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            )
+                        }
+                    }
+                },
+                scrollBehavior = scrollBehavior
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when {
+                uiState.isLoading && uiState.favorites.isEmpty() -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(strokeCap = androidx.compose.ui.graphics.StrokeCap.Round)
+                    }
+                }
 
-            else -> {
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 300.dp),
-                    state = gridState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    item(span = { GridItemSpan(maxLineSpan) }) {
-                        Column {
-                            Text(
-                                text = "Favorites",
-                                style = MaterialTheme.typography.headlineMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text = "${uiState.favorites.size} saved",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            uiState.errorMessage?.let { message ->
-                                Text(
-                                    text = message,
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
+                uiState.favorites.isEmpty() -> {
+                    EmptyFavoritesState()
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp, bottom = 32.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        uiState.favorites.chunked(2).forEach { rowMovies ->
+                            item {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    rowMovies.forEach { favorite ->
+                                        Box(modifier = Modifier.weight(1f)) {
+                                            val movie = Movie(
+                                                id = favorite.id,
+                                                title = favorite.title,
+                                                poster = favorite.poster,
+                                                genres = favorite.genres,
+                                                images = emptyList()
+                                            )
+                                            MovieCard(
+                                                movie = movie,
+                                                sharedTransitionScope = sharedTransitionScope,
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                onClick = { onMovieClick(movie) }
+                                            )
+                                        }
+                                    }
+                                    if (rowMovies.size == 1) {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
                             }
                         }
                     }
-
-                    items(uiState.favorites, key = { it.id }) { favorite ->
-                        MovieCard(
-                            movie = Movie(
-                                id = favorite.id,
-                                title = favorite.title,
-                                poster = favorite.poster,
-                                genres = favorite.genres,
-                                images = emptyList()
-                            )
-                        )
-                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyFavoritesState() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            modifier = Modifier.size(120.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.HeartBroken,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+        Text(
+            "Your list is empty",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            "Start adding movies to your favorites to see them here.",
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        Spacer(Modifier.height(32.dp))
+        Button(
+            onClick = { /* Navigate to Discover */ },
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text("Discover Movies")
         }
     }
 }

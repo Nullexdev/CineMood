@@ -1,6 +1,11 @@
 package tech.nullexdev.cinemood.core.presentation.components
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -9,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -16,10 +22,28 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import tech.nullexdev.cinemood.service.domain.moodel.Movie
 
+@OptIn(ExperimentalSharedTransitionApi::class)
+val SharedElementBoundsTransform = BoundsTransform { _, _ ->
+    spring(
+        stiffness = Spring.StiffnessLow,
+        dampingRatio = Spring.DampingRatioLowBouncy,
+        visibilityThreshold = Rect.VisibilityThreshold
+    )
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
+fun MovieCard(
+    movie: Movie,
+    modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -37,11 +61,24 @@ fun MovieCard(movie: Movie, modifier: Modifier = Modifier) {
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 val posterImage = movie.images.firstOrNull() ?: movie.poster
+                
+                val imageModifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                    with(sharedTransitionScope) {
+                        Modifier.sharedElement(
+                            rememberSharedContentState(key = "movie_poster_${movie.id}"),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            boundsTransform = SharedElementBoundsTransform
+                        )
+                    }
+                } else {
+                    Modifier
+                }
+
                 SubcomposeAsyncImage(
                     model = posterImage,
                     contentDescription = movie.title,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = imageModifier.fillMaxSize(),
                     loading = {
                         Box(
                             modifier = Modifier.fillMaxSize(),
