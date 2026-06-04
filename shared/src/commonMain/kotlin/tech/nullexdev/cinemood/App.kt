@@ -25,6 +25,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import tech.nullexdev.cinemood.core.navigation.Screen
 import tech.nullexdev.cinemood.core.presentation.components.CMNavigationBar
 import tech.nullexdev.cinemood.core.presentation.components.CMNavigationRail
+import tech.nullexdev.cinemood.core.presentation.components.SystemAppearance
 import tech.nullexdev.cinemood.feature.favorite.FavoriteScreen
 import tech.nullexdev.cinemood.feature.home.HomeScreen
 import tech.nullexdev.cinemood.feature.home.MovieDetailScreen
@@ -109,9 +110,16 @@ fun App(
                                 },
                                 entryProvider = entryProvider {
                                 entry<Screen.Home> {
+                                    val scope = LocalNavAnimatedContentScope.current
+                                    if (scope.transition.targetState == EnterExitState.Visible) {
+                                        SystemAppearance(
+                                            isLight = !themeState.isDarkTheme(),
+                                            statusBarColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+                                        )
+                                    }
                                     HomeScreen(
                                         sharedTransitionScope = this@SharedTransitionLayout,
-                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        animatedVisibilityScope = scope,
                                         onMovieClick = { movie ->
                                             backStack.add(
                                                 Screen.MovieDetail(
@@ -124,9 +132,16 @@ fun App(
                                     )
                                 }
                                 entry<Screen.Search> {
+                                    val scope = LocalNavAnimatedContentScope.current
+                                    if (scope.transition.targetState == EnterExitState.Visible) {
+                                        SystemAppearance(
+                                            isLight = !themeState.isDarkTheme(),
+                                            statusBarColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+                                        )
+                                    }
                                     SearchScreen(
                                         sharedTransitionScope = this@SharedTransitionLayout,
-                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        animatedVisibilityScope = scope,
                                         onMovieClick = { movie ->
                                             backStack.add(
                                                 Screen.MovieDetail(
@@ -139,9 +154,16 @@ fun App(
                                     )
                                 }
                                 entry<Screen.Favorite> {
+                                    val scope = LocalNavAnimatedContentScope.current
+                                    if (scope.transition.targetState == EnterExitState.Visible) {
+                                        SystemAppearance(
+                                            isLight = !themeState.isDarkTheme(),
+                                            statusBarColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+                                        )
+                                    }
                                     FavoriteScreen(
                                         sharedTransitionScope = this@SharedTransitionLayout,
-                                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                                        animatedVisibilityScope = scope,
                                         onMovieClick = { movie ->
                                             backStack.add(
                                                 Screen.MovieDetail(
@@ -153,7 +175,16 @@ fun App(
                                         }
                                     )
                                 }
-                                entry<Screen.Settings> { SettingsScreen() }
+                                entry<Screen.Settings> {
+                                    val scope = LocalNavAnimatedContentScope.current
+                                    if (scope.transition.targetState == EnterExitState.Visible) {
+                                        SystemAppearance(
+                                            isLight = !themeState.isDarkTheme(),
+                                            statusBarColor = androidx.compose.material3.MaterialTheme.colorScheme.surface
+                                        )
+                                    }
+                                    SettingsScreen()
+                                }
                                 entry<Screen.MovieDetail> { key ->
                                     MovieDetailScreen(
                                         movieId = key.movieId,

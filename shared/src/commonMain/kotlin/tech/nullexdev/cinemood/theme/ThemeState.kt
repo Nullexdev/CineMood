@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 
 import tech.nullexdev.cinemood.core.domain.entity.ThemeMode
+import tech.nullexdev.cinemood.core.presentation.components.SystemAppearance
 
 class ThemeState {
     private val _themeMode = mutableStateOf(ThemeMode.SYSTEM)
@@ -39,6 +40,7 @@ fun MyKMPAppTheme(
     content: @Composable () -> Unit
 ) {
     val darkTheme = themeState.isDarkTheme()
+    SystemAppearance(isLight = !darkTheme)
     val colorScheme = if (darkTheme) {
         darkColorScheme(
             primary = Color(0xFFFF0000),
