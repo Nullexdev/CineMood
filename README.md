@@ -1,15 +1,19 @@
 # 🎬 CineMood
 
-> **Discover Movies By Your Mood**
+> **Discover movies by your mood**
 
-CineMood is a **Kotlin Multiplatform** application for discovering Iranian movies. Built with Compose Multiplatform, it runs natively on Android, iOS, Desktop, Web (JS), and WebAssembly from a single shared codebase.
+CineMood is a **Kotlin Multiplatform** app for browsing Iranian cinema. Built with Compose Multiplatform, it targets Android, iOS, Desktop (JVM), and Web (Kotlin/JS and Wasm) from a shared codebase.
+
+Gradle root project: **CineMookKmp** · Package: `tech.nullexdev.cinemood`
+
+Portfolio / learning project — fork and reuse are welcome under the [MIT License](LICENSE).
 
 ---
 
 ## 📱 Platforms
 
 | Platform | Status |
-|---|---|
+|----------|--------|
 | Android | ✅ |
 | iOS | ✅ |
 | Desktop (JVM) | ✅ |
@@ -20,133 +24,130 @@ CineMood is a **Kotlin Multiplatform** application for discovering Iranian movie
 
 ## 🏗️ Architecture
 
-The project follows a **multi-module clean architecture** pattern with clear separation of concerns:
+Multi-module **clean architecture** with feature modules and a shared presentation layer:
 
 ```
-CineMood/
-├── androidApp/          # Android entry point
-├── iosApp/              # iOS entry point (Xcode project)
-├── desktopApp/          # Desktop (JVM) entry point
-├── webApp/              # Web entry point
-├── shared/              # Shared KMP module (UI + DI wiring)
+CineMookKmp/
+├── androidApp/              # Android entry point
+├── iosApp/                  # iOS entry point (Xcode)
+├── desktopApp/              # Desktop (JVM) entry point
+├── webApp/                  # Web entry point (JS + Wasm)
+├── shared/                  # App shell, navigation, DI wiring, theme
 ├── core/
-│   ├── domain/          # Base domain models & interfaces
-│   ├── navigation/      # Navigation primitives
-│   └── presentation/    # Shared UI components (MovieCard, TopAppBar, etc.)
+│   ├── domain/              # MVI contracts, entities, repository interfaces
+│   ├── data/                # Ktor HTTP client, theme repo, SQLDelight / Room
+│   ├── navigation/          # Screen routes (Navigation3 NavKey)
+│   └── presentation/        # Shared UI (MovieCard, nav chrome, SystemAppearance)
 ├── feature/
-│   ├── home/            # Home screen — movie list with pagination
-│   ├── search/          # Search screen
-│   ├── favorite/        # Favorites screen
-│   └── settings/        # Settings screen
+│   ├── home/                # Movie list, pagination, movie detail
+│   ├── search/              # Search with pagination
+│   ├── favorite/            # Favorites grid
+│   └── settings/            # Theme and app preferences
 └── service/
-    ├── domain/          # Service-level domain logic
+    ├── domain/              # Movie models, use cases, repository contract
     └── data/
-        └── iranianMoviesApi/  # API data source implementation
+        └── iranianMoviesApi/  # Ktor client for moviesapi.ir
 ```
 
-### Layer Responsibilities
+### Layer responsibilities
 
-- **`core/domain`** — Base entities, repository interfaces, use cases
-- **`core/presentation`** — Reusable Compose components shared across features
-- **`core/navigation`** — Navigation contracts and route definitions
-- **`feature/*`** — Self-contained feature modules (ViewModel, UI, UiState, UiAction)
-- **`service/data`** — Network layer (Ktor-based API client for Iranian movies)
-- **`shared`** — Composes all modules together; configures Koin DI for each platform
+| Module | Role |
+|--------|------|
+| `core/domain` | `MviViewModel`, `MviUiState` / `MviUiAction`, base use cases and repository interfaces |
+| `core/data` | Platform `HttpClient`, `ThemeRepository`, SQLDelight database (favorites schema); Room on Android, iOS, and JVM |
+| `core/presentation` | Reusable Compose UI, Coil image loading, cross-platform `SystemAppearance` |
+| `core/navigation` | Typed `Screen` destinations for Navigation3 |
+| `feature/*` | Feature screens, ViewModels, and Koin modules |
+| `service/domain` | `GetMoviesUseCase`, `SearchMoviesUseCase`, domain models |
+| `service/data:iranianMoviesApi` | Remote API ( [moviesapi.ir](https://moviesapi.ir) ) |
+| `shared` | `App` composable, bottom bar / navigation rail, Koin `initKoin()` |
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech stack
 
-| Category | Library |
-|---|---|
-| UI | Compose Multiplatform |
-| Architecture | MVVM + UiState/UiAction |
-| DI | Koin (koin-compose, koin-compose-viewmodel) |
-| Navigation | Navigation3 |
-| Async | Kotlin Coroutines + Flow |
-| Serialization | Kotlinx Serialization |
-| Lifecycle | AndroidX Lifecycle (collectAsStateWithLifecycle) |
+| Category | Library / version |
+|----------|-------------------|
+| Language | Kotlin **2.4** |
+| UI | Compose Multiplatform **1.11** · Material 3 |
+| Architecture | MVI (`UiState` / `UiAction` + `MviViewModel`) |
+| DI | Koin 4 (`koin-compose`, `koin-compose-viewmodel`) |
+| Navigation | Navigation3 (`navigation3-ui`) |
+| Networking | Ktor 3 · Kotlinx Serialization |
+| Images | Coil 3 (`coil-compose`, `coil-network-ktor3`) |
+| Local data | SQLDelight 2 · AndroidX Room (native targets) |
+| Async | Kotlin Coroutines · Flow |
+| Lifecycle | AndroidX Lifecycle (`collectAsStateWithLifecycle`) |
 
 ---
 
 ## ✨ Features
 
-- 🎥 Browse Iranian movies list with infinite scroll / load-more pagination
-- 🔍 Search movies
-- ❤️ Save favorites
-- ⚙️ Settings
-- 🌙 Dark / Light theme with Material 3 color scheme
-- 📱 Fully adaptive UI across all platforms
+- 🎥 **Home** — paginated Iranian movie catalog from moviesapi.ir with load-more
+- 🎞️ **Movie detail** — detail screen with shared-element style transitions
+- 🔍 **Search** — query movies with pagination
+- ❤️ **Favorites** — saved-movies grid (SQLDelight schema in `core:data`; UI wired with sample data)
+- ⚙️ **Settings** — light / dark / system theme via `ThemeRepository`
+- 📐 **Adaptive layout** — bottom navigation on portrait/narrow; navigation rail on wide screens
+- 🌙 **Material 3** theming with per-platform system bar styling (`SystemAppearance`)
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting started
 
 ### Prerequisites
 
-- Android Studio Hedgehog or later (with KMP plugin)
-- Xcode 15+ (for iOS)
-- JDK 11+
+- **JDK 11+**
+- **Android Studio** Ladybug or newer with Kotlin Multiplatform and Compose Multiplatform support
+- **Xcode 15+** (iOS)
+- **Node.js** (optional; used by Kotlin/JS and Wasm web toolchains)
 
-### Clone the repository
+### Clone
 
 ```bash
 git clone https://github.com/Alimmzdev/CineMood.git
-cd CineMood
+cd CineMood   # local folder may be named CineMookKmp
 ```
 
-### Run on Android
+### Android
 
 ```bash
-# macOS / Linux
 ./gradlew :androidApp:installDebug
-
-# Windows
-.\gradlew.bat :androidApp:installDebug
 ```
 
-### Run on Desktop
+On Windows: `.\gradlew.bat :androidApp:installDebug`
+
+### Desktop
 
 ```bash
-# macOS / Linux
 ./gradlew :desktopApp:run
-
-# Windows
-.\gradlew.bat :desktopApp:run
 ```
 
-### Run on Web (Wasm — recommended)
+### Web (Wasm — recommended)
 
 ```bash
-# macOS / Linux
 ./gradlew :webApp:wasmJsBrowserDevelopmentRun
-
-# Windows
-.\gradlew.bat :webApp:wasmJsBrowserDevelopmentRun
 ```
 
-### Run on Web (JS — broader browser support)
+### Web (JS — broader browser support)
 
 ```bash
-# macOS / Linux
 ./gradlew :webApp:jsBrowserDevelopmentRun
-
-# Windows
-.\gradlew.bat :webApp:jsBrowserDevelopmentRun
 ```
 
-### Run on iOS
+### iOS
 
-Open `iosApp/iosApp.xcodeproj` in Xcode and run on a simulator or device.
+Open `iosApp/iosApp.xcodeproj` in Xcode, then run on a simulator or device.
 
 ---
 
-## 📂 Module Graph (simplified)
+## 📂 Module graph
 
 ```
 androidApp / iosApp / desktopApp / webApp
         └──► shared
                ├──► core:domain
+               ├──► core:data
                ├──► core:navigation
                ├──► core:presentation
                ├──► feature:home
@@ -155,16 +156,19 @@ androidApp / iosApp / desktopApp / webApp
                ├──► feature:settings
                ├──► service:domain
                └──► service:data:iranianMoviesApi
+                      └──► core:data (HTTP client)
 ```
 
 ---
 
 ## 🤝 Contributing
 
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
+Pull requests are welcome. For larger changes, open an issue first to discuss the approach.
 
 ---
 
 ## 📄 License
 
-This project is open source. See [LICENSE](LICENSE) for details.
+This project is released under the [MIT License](LICENSE). You may fork, study, and reuse the code (including in commercial apps) as long as you keep the copyright notice and license text.
+
+Third-party libraries and the [moviesapi.ir](https://moviesapi.ir) API remain subject to their own terms.
