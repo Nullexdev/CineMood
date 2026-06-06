@@ -33,6 +33,9 @@ import tech.nullexdev.cinemood.feature.search.SearchScreen
 import tech.nullexdev.cinemood.feature.settings.SettingsScreen
 import tech.nullexdev.cinemood.presentation.app.AppUiAction
 import tech.nullexdev.cinemood.presentation.app.AppViewModel
+import tech.nullexdev.cinemood.core.presentation.components.SharedMoviePosterDefaults
+import tech.nullexdev.cinemood.navigation.movieDetailNavMetadata
+import tech.nullexdev.cinemood.navigation.sharedNavSizeTransform
 import tech.nullexdev.cinemood.theme.MyKMPAppTheme
 import tech.nullexdev.cinemood.theme.ThemeState
 
@@ -103,6 +106,8 @@ fun App(
                         SharedTransitionLayout {
                             NavDisplay(
                                 backStack = backStack,
+                                sharedTransitionScope = this@SharedTransitionLayout,
+                                sizeTransform = sharedNavSizeTransform(),
                                 onBack = {
                                     if (backStack.size > 1) {
                                         backStack.removeLast()
@@ -125,7 +130,8 @@ fun App(
                                                 Screen.MovieDetail(
                                                     movieId = movie.id,
                                                     movieTitle = movie.title,
-                                                    moviePoster = movie.poster
+                                                    moviePoster = movie.poster,
+                                                    posterCornerRadiusDp = SharedMoviePosterDefaults.verticalCardCornerRadius.value.toInt(),
                                                 )
                                             )
                                         }
@@ -147,7 +153,8 @@ fun App(
                                                 Screen.MovieDetail(
                                                     movieId = movie.id,
                                                     movieTitle = movie.title,
-                                                    moviePoster = movie.poster
+                                                    moviePoster = movie.poster,
+                                                    posterCornerRadiusDp = SharedMoviePosterDefaults.cardCornerRadius.value.toInt(),
                                                 )
                                             )
                                         }
@@ -169,7 +176,8 @@ fun App(
                                                 Screen.MovieDetail(
                                                     movieId = movie.id,
                                                     movieTitle = movie.title,
-                                                    moviePoster = movie.poster
+                                                    moviePoster = movie.poster,
+                                                    posterCornerRadiusDp = SharedMoviePosterDefaults.cardCornerRadius.value.toInt(),
                                                 )
                                             )
                                         }
@@ -185,11 +193,14 @@ fun App(
                                     }
                                     SettingsScreen()
                                 }
-                                entry<Screen.MovieDetail> { key ->
+                                entry<Screen.MovieDetail>(
+                                    metadata = movieDetailNavMetadata(),
+                                ) { key ->
                                     MovieDetailScreen(
                                         movieId = key.movieId,
                                         movieTitle = key.movieTitle,
                                         moviePoster = key.moviePoster,
+                                        posterCornerRadiusDp = key.posterCornerRadiusDp,
                                         sharedTransitionScope = this@SharedTransitionLayout,
                                         animatedVisibilityScope = LocalNavAnimatedContentScope.current,
                                         onBack = { backStack.removeLast() }

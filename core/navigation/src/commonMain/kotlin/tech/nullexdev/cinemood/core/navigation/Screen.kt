@@ -18,6 +18,7 @@ sealed interface Screen : NavKey {
     data class MovieDetail(
         val movieId: Int,
         val movieTitle: String,
-        val moviePoster: String
+        val moviePoster: String,
+        val posterCornerRadiusDp: Int = 24,
     ) : Screen
 }

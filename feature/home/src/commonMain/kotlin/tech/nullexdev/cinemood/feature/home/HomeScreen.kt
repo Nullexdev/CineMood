@@ -27,6 +27,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import org.koin.compose.viewmodel.koinViewModel
 import tech.nullexdev.cinemood.core.presentation.components.ErrorState
+import tech.nullexdev.cinemood.core.presentation.components.SharedMoviePosterDefaults
+import tech.nullexdev.cinemood.core.presentation.components.moviePosterKey
+import tech.nullexdev.cinemood.core.presentation.components.rememberAnimatedPosterCornerRadius
+import tech.nullexdev.cinemood.core.presentation.components.sharedMoviePosterModifier
 import tech.nullexdev.cinemood.feature.home.presentation.HomeUiAction
 import tech.nullexdev.cinemood.feature.home.presentation.HomeViewModel
 import tech.nullexdev.cinemood.service.domain.moodel.Movie
@@ -351,17 +355,21 @@ fun VerticalMovieCard(
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
             val modifier = if (sharedTransitionScope != null && animatedVisibilityScope != null) {
+                val cornerRadius = rememberAnimatedPosterCornerRadius(
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    listCornerRadius = SharedMoviePosterDefaults.verticalCardCornerRadius,
+                    isDetailDestination = false,
+                )
                 with(sharedTransitionScope) {
-                    Modifier.sharedElement(
-                        rememberSharedContentState(key = "movie_poster_${movie.id}"),
+                    sharedMoviePosterModifier(
+                        posterKey = moviePosterKey(movie.id),
                         animatedVisibilityScope = animatedVisibilityScope,
-                        boundsTransform = tech.nullexdev.cinemood.core.presentation.components.SharedElementBoundsTransform
+                        cornerRadius = cornerRadius,
                     )
                 }
             } else {
                 Modifier
             }
-
             AsyncImage(
                 model = movie.poster,
                 contentDescription = movie.title,

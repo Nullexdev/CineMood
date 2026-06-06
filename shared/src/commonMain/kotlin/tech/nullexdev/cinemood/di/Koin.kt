@@ -7,6 +7,7 @@ import tech.nullexdev.cinemood.feature.search.di.searchModule
 import tech.nullexdev.cinemood.feature.settings.di.settingsModule
 import tech.nullexdev.cinemood.presentation.app.AppViewModel
 import tech.nullexdev.cinemood.service.data.iranianmoviesapi.di.iranianMoviesApiDataModule
+import tech.nullexdev.cinemood.service.domain.usecase.GetMovieDetailUseCase
 import tech.nullexdev.cinemood.service.domain.usecase.GetMoviesUseCase
 import tech.nullexdev.cinemood.service.domain.usecase.SearchMoviesUseCase
 import org.koin.core.context.startKoin
@@ -26,6 +27,11 @@ private val domainModule = module {
     }
     factory<SearchMoviesUseCase> {
         SearchMoviesUseCase(
+            get()
+        )
+    }
+    factory<GetMovieDetailUseCase> {
+        GetMovieDetailUseCase(
             get()
         )
     }

@@ -1,6 +1,6 @@
 package tech.nullexdev.cinemood.service.data.iranianmoviesapi.datasource
 
-import tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MovieDto
+import tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MovieDetailDto
 import tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MoviesResponseDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -36,6 +36,13 @@ class MoviesRemoteDataSourceImpl(
                 parameter("q", query)
                 parameter("page", page)
             }.body()
+            response
+        }
+    }
+
+    override suspend fun fetchMovieDetail(movieId: Int): Result<MovieDetailDto> = withContext(Dispatchers.Default) {
+        runCatching {
+            val response: MovieDetailDto = httpClient.get("$baseUrl/api/v1/movies/$movieId").body()
             response
         }
     }

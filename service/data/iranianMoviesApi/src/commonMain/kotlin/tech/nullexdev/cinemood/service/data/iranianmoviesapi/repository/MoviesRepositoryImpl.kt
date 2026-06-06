@@ -3,6 +3,7 @@ package tech.nullexdev.cinemood.service.data.iranianmoviesapi.repository
 import tech.nullexdev.cinemood.core.domain.common.BaseResult
 import tech.nullexdev.cinemood.core.domain.common.toBaseResult
 import tech.nullexdev.cinemood.service.data.iranianmoviesapi.datasource.MoviesRemoteDataSource
+import tech.nullexdev.cinemood.service.domain.moodel.MovieDetail
 import tech.nullexdev.cinemood.service.domain.moodel.MoviesPage
 import tech.nullexdev.cinemood.service.domain.repository.MoviesRepository
 import kotlinx.coroutines.flow.Flow
@@ -25,6 +26,24 @@ class MoviesRepositoryImpl(
             responseDto.toDomainModel()
         }
         emit(baseResult)
+    }
+
+    override fun getMovieDetail(movieId: Int): Flow<BaseResult<MovieDetail>> = flow {
+        require(movieId > 0) { "Movie id must be positive, got $movieId" }
+        val result = remoteDataSource.fetchMovieDetail(movieId)
+        val baseResult = result.toBaseResult(
+            errorMapper = { it.asUiMessage() }
+        ) { detailDto ->
+            detailDto.toDomainModel()
+        }
+        emit(baseResult)
+    }.catch { exception ->
+        emit(
+            BaseResult.Error(
+                exception = exception as? Exception ?: Exception(exception),
+                message = exception.asUiMessage(),
+            )
+        )
     }
 
     override fun searchMovies(query: String, page: Int): Flow<BaseResult<MoviesPage>> = flow {

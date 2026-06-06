@@ -2,7 +2,7 @@ package tech.nullexdev.cinemood.service.domain.repository
 
 import tech.nullexdev.cinemood.core.domain.common.BaseResult
 import tech.nullexdev.cinemood.core.domain.repository.BaseRepository
-import tech.nullexdev.cinemood.service.domain.moodel.Movie
+import tech.nullexdev.cinemood.service.domain.moodel.MovieDetail
 import tech.nullexdev.cinemood.service.domain.moodel.MoviesPage
 import kotlinx.coroutines.flow.Flow
 
@@ -22,8 +22,15 @@ interface MoviesRepository : BaseRepository {
     fun getMovies(page: Int): Flow<BaseResult<tech.nullexdev.cinemood.service.domain.moodel.MoviesPage>>
 
     /**
+     * Retrieves full details for a single movie by id.
+     *
+     * @param movieId The movie id (required)
+     * @return Flow emitting BaseResult with MovieDetail or Error
+     */
+    fun getMovieDetail(movieId: Int): Flow<BaseResult<MovieDetail>>
+
+    /**
      * Searches for movies by query string with pagination support.
-     * This replaces the old getMovieById method.
      *
      * @param query The search query (movie name) - required
      * @param page The page number to retrieve (1-indexed, optional, defaults to 1)

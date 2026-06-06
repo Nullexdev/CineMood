@@ -1,6 +1,6 @@
 package tech.nullexdev.cinemood.service.data.iranianmoviesapi.datasource
 
-import tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MovieDto
+import tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MovieDetailDto
 import tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MoviesResponseDto
 
 /**
@@ -49,4 +49,12 @@ interface MoviesRemoteDataSource {
      * @see tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MovieDto
      */
     suspend fun searchMovies(query: String, page: Int = 1): Result<tech.nullexdev.cinemood.service.data.iranianmoviesapi.dto.MoviesResponseDto>
+
+    /**
+     * Fetches full details for a single movie by id.
+     *
+     * @param movieId The movie id (required)
+     * @return [Result] containing [MovieDetailDto] or exception
+     */
+    suspend fun fetchMovieDetail(movieId: Int): Result<MovieDetailDto>
 }

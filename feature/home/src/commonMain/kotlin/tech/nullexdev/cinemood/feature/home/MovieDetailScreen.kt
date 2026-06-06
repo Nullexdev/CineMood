@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -19,14 +20,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.datasource.LoremIpsum
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import tech.nullexdev.cinemood.core.presentation.components.SharedElementBoundsTransform
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import tech.nullexdev.cinemood.core.presentation.components.SharedMoviePosterDefaults
+import tech.nullexdev.cinemood.core.presentation.components.SharedTransitionAnimations
 import tech.nullexdev.cinemood.core.presentation.components.SystemAppearance
+import tech.nullexdev.cinemood.core.presentation.components.moviePosterKey
+import tech.nullexdev.cinemood.core.presentation.components.rememberAnimatedPosterCornerRadius
+import tech.nullexdev.cinemood.core.presentation.components.sharedDetailContentEnterTransition
+import tech.nullexdev.cinemood.core.presentation.components.sharedDetailContentExitTransition
+import tech.nullexdev.cinemood.core.presentation.components.sharedDetailOverlayEnterTransition
+import tech.nullexdev.cinemood.core.presentation.components.sharedDetailPlayButtonEnterTransition
+import tech.nullexdev.cinemood.core.presentation.components.sharedDetailPlayButtonExitTransition
+import tech.nullexdev.cinemood.core.presentation.components.sharedDetailSectionContentEnterTransition
+import tech.nullexdev.cinemood.core.presentation.components.sharedMoviePosterModifier
+import tech.nullexdev.cinemood.core.presentation.components.shouldRenderSharedOverlay
 import tech.nullexdev.cinemood.core.presentation.theme.LocalThemeState
+import tech.nullexdev.cinemood.feature.home.presentation.MovieDetailUiAction
+import tech.nullexdev.cinemood.feature.home.presentation.MovieDetailUiState
+import tech.nullexdev.cinemood.feature.home.presentation.MovieDetailViewModel
+import tech.nullexdev.cinemood.service.domain.moodel.MovieDetail
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -34,257 +53,453 @@ fun MovieDetailScreen(
     movieId: Int,
     movieTitle: String,
     moviePoster: String,
+    posterCornerRadiusDp: Int,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: MovieDetailViewModel = koinViewModel(key = "movie_detail_$movieId") { parametersOf(movieId) },
 ) {
-    val scrollState = rememberScrollState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val scrollState = remember(movieId) { ScrollState(0) }
     val themeState = LocalThemeState.current
     val darkTheme = themeState.isDarkTheme()
-
-    // Dynamic status bar icons:
-    // If scrolled past the poster (approx 400dp), follow the theme icons.
-    // Otherwise, keep light icons (isLight = false) for the immersive poster.
+    val movieDetail: MovieDetail? = uiState.movieDetail
+    val displayTitle: String = movieDetail?.title ?: movieTitle
+    val displayPoster: String = movieDetail?.poster?.takeIf { it.isNotBlank() } ?: moviePoster
     val isSystemBarsLight = if (scrollState.value > 1000) !darkTheme else false
     SystemAppearance(isLight = isSystemBarsLight)
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(bottom = innerPadding.calculateBottomPadding())
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState),
         ) {
-            // Hero Image Section
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(450.dp)
+            MovieDetailHeroSection(
+                movieId = movieId,
+                movieTitle = displayTitle,
+                moviePoster = displayPoster,
+                posterCornerRadiusDp = posterCornerRadiusDp,
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                onBack = onBack,
+            )
+            MovieDetailFadeSection(
+                uiState = uiState,
+                movieDetail = movieDetail,
+                animatedVisibilityScope = animatedVisibilityScope,
+                onRetry = { viewModel.onAction(MovieDetailUiAction.Retry) },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun MovieDetailFadeSection(
+    uiState: MovieDetailUiState,
+    movieDetail: MovieDetail?,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onRetry: () -> Unit,
+) {
+    val sectionShape = RoundedCornerShape(
+        topStart = SharedTransitionAnimations.DETAIL_SECTION_TOP_RADIUS_DP.dp,
+        topEnd = SharedTransitionAnimations.DETAIL_SECTION_TOP_RADIUS_DP.dp,
+    )
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .offset(y = (-20).dp)
+            .then(
+                with(animatedVisibilityScope) {
+                    Modifier.animateEnterExit(
+                        enter = sharedDetailContentEnterTransition(),
+                        exit = sharedDetailContentExitTransition(),
+                    )
+                },
+            ),
+        shape = sectionShape,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 6.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 24.dp)
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = 320,
+                        easing = SharedTransitionAnimations.EASING,
+                    ),
+                ),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            AnimatedVisibility(
+                visible = uiState.isLoading && movieDetail == null,
+                enter = fadeIn(tween(280)),
+                exit = fadeOut(tween(180)),
             ) {
-                with(sharedTransitionScope) {
-                    AsyncImage(
-                        model = moviePoster,
-                        contentDescription = movieTitle,
-                        modifier = Modifier
-                            .sharedElement(
-                                rememberSharedContentState(key = "movie_poster_$movieId"),
-                                animatedVisibilityScope = animatedVisibilityScope,
-                                boundsTransform = SharedElementBoundsTransform
-                            )
-                            .fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-
-                // Gradient Overlay
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                                    MaterialTheme.colorScheme.surface
-                                ),
-                                startY = 300f
-                            )
-                        )
-                )
-
-                // Back Button
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .padding(top = 48.dp, start = 16.dp)
-                        .align(Alignment.TopStart)
-                        .clip(CircleShape)
-                        .background(Color.Black.copy(alpha = 0.3f))
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White
-                    )
-                }
-
-                // Action Buttons (Top Right)
-                Row(
-                    modifier = Modifier
-                        .padding(top = 48.dp, end = 16.dp)
-                        .align(Alignment.TopEnd),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    IconButton(
-                        onClick = { },
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.3f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorite",
-                            tint = Color.White
-                        )
-                    }
-                }
-
-                // Top Gradient for Status Bar
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Black.copy(alpha = 0.5f),
-                                    Color.Transparent
-                                )
-                            )
-                        )
-                )
-
-                // Play Button Over Poster
-                Surface(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(72.dp)
-                        .then(
-                            with(sharedTransitionScope) {
-                                Modifier.renderInSharedTransitionScopeOverlay(
-                                    renderInOverlay = {
-                                        animatedVisibilityScope.transition.currentState != EnterExitState.PostExit ||
-                                            animatedVisibilityScope.transition.targetState != EnterExitState.PostExit
-                                    }
-                                )
-                            }
-                        )
-                        .then(
-                            with(animatedVisibilityScope) {
-                                Modifier.animateEnterExit(
-                                    enter = scaleIn() + fadeIn(),
-                                    exit = scaleOut() + fadeOut()
-                                )
-                            }
-                        )
-                        .clickable { },
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
-                    tonalElevation = 8.dp
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = "Play Trailer",
-                            modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+                    CircularProgressIndicator()
                 }
             }
-
-            // Movie Info Section
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 24.dp)
-                    .offset(y = (-20).dp)
-                    .then(
-                        with(animatedVisibilityScope) {
-                            Modifier.animateEnterExit(
-                                enter = slideInVertically { it / 2 } + fadeIn(),
-                                exit = slideOutVertically { it / 2 } + fadeOut()
-                            )
-                        }
-                    ),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+            AnimatedVisibility(
+                visible = uiState.errorMessage != null && movieDetail == null,
+                enter = sharedDetailSectionContentEnterTransition(
+                    delayMillis = SharedTransitionAnimations.CONTENT_STAGGER_DELAY_MS,
+                ),
+                exit = fadeOut(tween(180)),
             ) {
-                Text(
-                    text = movieTitle,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Black,
-                    letterSpacing = (-1).sp
+                MovieDetailErrorState(
+                    message = uiState.errorMessage.orEmpty(),
+                    onRetry = onRetry,
                 )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Star,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            Text(
-                                "8.5",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-
-                    Text(
-                        "2024 • 2h 15m • Sci-Fi",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+            }
+            AnimatedVisibility(
+                visible = movieDetail != null,
+                enter = sharedDetailSectionContentEnterTransition(
+                    delayMillis = SharedTransitionAnimations.OVERLAY_ENTER_DELAY_MS,
+                ),
+                exit = fadeOut(tween(220)),
+            ) {
+                if (movieDetail != null) {
+                    MovieDetailContent(movieDetail = movieDetail)
                 }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
 
-                Text(
-                    text = "Summary",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun MovieDetailHeroSection(
+    movieId: Int,
+    movieTitle: String,
+    moviePoster: String,
+    posterCornerRadiusDp: Int,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onBack: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(450.dp),
+    ) {
+        val cornerRadius = rememberAnimatedPosterCornerRadius(
+            animatedVisibilityScope = animatedVisibilityScope,
+            listCornerRadius = posterCornerRadiusDp.dp,
+            isDetailDestination = true,
+        )
+        with(sharedTransitionScope) {
+            AsyncImage(
+                model = moviePoster,
+                contentDescription = movieTitle,
+                modifier = sharedMoviePosterModifier(
+                    posterKey = moviePosterKey(movieId),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    cornerRadius = cornerRadius,
+                ).fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                            MaterialTheme.colorScheme.surface,
+                        ),
+                        startY = 300f,
+                    ),
+                ),
+        )
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier
+                .padding(top = 48.dp, start = 16.dp)
+                .align(Alignment.TopStart)
+                .then(
+                    with(animatedVisibilityScope) {
+                        Modifier.animateEnterExit(
+                            enter = sharedDetailOverlayEnterTransition(),
+                            exit = fadeOut(tween(180)),
+                        )
+                    },
                 )
-
-                Text(
-                    text = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since 1966, when designers at Letraset and James Mosley, the librarian at St Bride Printing Library, took a 1914 Cicero translation and scrambled it to make dummy text for Letraset's Body Type sheets. It has survived not only many decades, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised thanks to these sheets and more recently with desktop publishing software including versions of Lorem Ipsum. It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like). Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32. Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32. Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32. Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 26.sp
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.3f)),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.White,
+            )
+        }
+        Row(
+            modifier = Modifier
+                .padding(top = 48.dp, end = 16.dp)
+                .align(Alignment.TopEnd),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            IconButton(
+                onClick = { },
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.3f)),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = Color.White,
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Cast or similar info can go here
-                Text(
-                    text = "Cast",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.5f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
+        Surface(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .size(72.dp)
+                .then(
+                    with(sharedTransitionScope) {
+                        Modifier.renderInSharedTransitionScopeOverlay(
+                            renderInOverlay = {
+                                shouldRenderSharedOverlay(
+                                    currentState = animatedVisibilityScope.transition.currentState,
+                                    targetState = animatedVisibilityScope.transition.targetState,
+                                )
+                            },
+                        )
+                    },
                 )
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(vertical = 8.dp)
-                ) {
-                    items(5) { index ->
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Surface(
-                                modifier = Modifier.size(64.dp),
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.surfaceVariant
-                            ) { }
-                            Spacer(Modifier.height(8.dp))
-                            Text("Actor $index", style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
+                .then(
+                    with(animatedVisibilityScope) {
+                        Modifier.animateEnterExit(
+                            enter = sharedDetailPlayButtonEnterTransition(),
+                            exit = sharedDetailPlayButtonExitTransition(),
+                        )
+                    },
+                )
+                .clickable { },
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+            tonalElevation = 8.dp,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.Default.PlayArrow,
+                    contentDescription = "Play Trailer",
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                )
             }
         }
     }
+}
+
+@Composable
+private fun MovieDetailContent(movieDetail: MovieDetail) {
+    Text(
+        text = movieDetail.title,
+        style = MaterialTheme.typography.headlineLarge,
+        fontWeight = FontWeight.Black,
+        letterSpacing = (-1).sp,
+    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (movieDetail.imdbRating.isNotBlank()) {
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Text(
+                        movieDetail.imdbRating,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+        }
+        Text(
+            text = buildMovieMetaLine(movieDetail),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+    if (movieDetail.plot.isNotBlank()) {
+        Text(
+            text = "Summary",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = movieDetail.plot,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            lineHeight = 26.sp,
+        )
+    }
+    if (movieDetail.director.isNotBlank()) {
+        MovieDetailInfoRow(label = "Director", value = movieDetail.director)
+    }
+    if (movieDetail.writer.isNotBlank()) {
+        MovieDetailInfoRow(label = "Writer", value = movieDetail.writer)
+    }
+    if (movieDetail.country.isNotBlank()) {
+        MovieDetailInfoRow(label = "Country", value = movieDetail.country)
+    }
+    if (movieDetail.awards.isNotBlank()) {
+        MovieDetailInfoRow(label = "Awards", value = movieDetail.awards)
+    }
+    val castNames: List<String> = movieDetail.actors
+        .split(",")
+        .map { name -> name.trim() }
+        .filter { name -> name.isNotEmpty() }
+    if (castNames.isNotEmpty()) {
+        Text(
+            text = "Cast",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(vertical = 8.dp),
+        ) {
+            items(castNames) { actorName ->
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Surface(
+                        modifier = Modifier.size(64.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = actorName.firstOrNull()?.uppercaseChar()?.toString().orEmpty(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = actorName,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 2,
+                    )
+                }
+            }
+        }
+    }
+    if (movieDetail.images.isNotEmpty()) {
+        Text(
+            text = "Gallery",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 8.dp),
+        ) {
+            items(movieDetail.images) { imageUrl ->
+                AsyncImage(
+                    model = imageUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(120.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MovieDetailInfoRow(
+    label: String,
+    value: String,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun MovieDetailErrorState(
+    message: String,
+    onRetry: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error,
+        )
+        Button(onClick = onRetry) {
+            Text("Retry")
+        }
+    }
+}
+
+private fun buildMovieMetaLine(movieDetail: MovieDetail): String {
+    return listOfNotNull(
+        movieDetail.year.takeIf { it.isNotBlank() },
+        movieDetail.runtime.takeIf { it.isNotBlank() },
+        movieDetail.genres.takeIf { it.isNotEmpty() }?.joinToString(" • "),
+    ).joinToString(" • ")
 }
