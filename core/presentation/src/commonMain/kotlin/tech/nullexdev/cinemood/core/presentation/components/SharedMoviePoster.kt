@@ -8,13 +8,13 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.shape.RoundedCornerShape
 
 object SharedMoviePosterDefaults {
     val cardCornerRadius: Dp = 16.dp
@@ -22,7 +22,6 @@ object SharedMoviePosterDefaults {
     val detailCornerRadius: Dp = 0.dp
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun rememberAnimatedPosterCornerRadius(
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -30,7 +29,8 @@ fun rememberAnimatedPosterCornerRadius(
     isDetailDestination: Boolean,
 ): Dp {
     val transition = animatedVisibilityScope.transition
-    val animatedRadius: Dp by transition.animateDp(
+
+    val animatedRadius by transition.animateDp(
         transitionSpec = {
             spring(
                 dampingRatio = 0.86f,
@@ -42,17 +42,26 @@ fun rememberAnimatedPosterCornerRadius(
     ) { state ->
         if (isDetailDestination) {
             when (state) {
-                EnterExitState.Visible -> SharedMoviePosterDefaults.detailCornerRadius
-                EnterExitState.PreEnter, EnterExitState.PostExit -> listCornerRadius
+                EnterExitState.Visible ->
+                    SharedMoviePosterDefaults.detailCornerRadius
+
+                EnterExitState.PreEnter,
+                EnterExitState.PostExit ->
+                    listCornerRadius
             }
         } else {
             when (state) {
-                EnterExitState.Visible -> listCornerRadius
-                EnterExitState.PreEnter, EnterExitState.PostExit -> SharedMoviePosterDefaults.detailCornerRadius
+                EnterExitState.Visible ->
+                    listCornerRadius
+
+                EnterExitState.PreEnter,
+                EnterExitState.PostExit ->
+                    SharedMoviePosterDefaults.detailCornerRadius
             }
         }
     }
-    return animatedRadius
+
+    return animatedRadius.coerceAtLeast(0.dp)
 }
 
 @Composable
@@ -62,6 +71,11 @@ fun SharedTransitionScope.sharedMoviePosterModifier(
     animatedVisibilityScope: AnimatedVisibilityScope,
     cornerRadius: Dp,
 ): Modifier {
+
+    require(cornerRadius.value >= 0f) {
+        "Negative radius: $cornerRadius"
+    }
+
     return Modifier
         .sharedElement(
             sharedContentState = rememberSharedContentState(key = posterKey),
