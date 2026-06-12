@@ -5,7 +5,21 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,17 +27,44 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.SettingsSuggest
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,11 +99,15 @@ fun SettingsScreen(
                 )
             )
         }
-    ) { paddingValues ->
+    ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    start = innerPadding.calculateStartPadding(layoutDirection = LayoutDirection.Ltr),
+                    end = innerPadding.calculateEndPadding(LayoutDirection.Ltr),
+                ),
             contentPadding = PaddingValues(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -83,7 +128,13 @@ fun SettingsScreen(
                     ) {
                         ThemeSelector(
                             selectedMode = uiState.themeMode,
-                            onModeSelected = { viewModel.onAction(SettingsUiAction.ThemeModeSelected(it)) }
+                            onModeSelected = {
+                                viewModel.onAction(
+                                    SettingsUiAction.ThemeModeSelected(
+                                        it
+                                    )
+                                )
+                            }
                         )
                     }
 
@@ -100,7 +151,13 @@ fun SettingsScreen(
                         trailing = {
                             Switch(
                                 checked = uiState.notificationsEnabled,
-                                onCheckedChange = { viewModel.onAction(SettingsUiAction.NotificationsToggled(it)) }
+                                onCheckedChange = {
+                                    viewModel.onAction(
+                                        SettingsUiAction.NotificationsToggled(
+                                            it
+                                        )
+                                    )
+                                }
                             )
                         }
                     )
@@ -214,7 +271,7 @@ fun ProfileSection() {
                             )
                         }
                     }
-                    
+
                     Surface(
                         modifier = Modifier.size(32.dp),
                         shape = CircleShape,
@@ -223,7 +280,11 @@ fun ProfileSection() {
                         tonalElevation = 4.dp
                     ) {
                         Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Default.Edit,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
                         }
                     }
                 }
@@ -240,9 +301,9 @@ fun ProfileSection() {
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
+
                 Spacer(Modifier.height(24.dp))
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -307,7 +368,7 @@ fun ProBanner() {
                         )
                     }
                 }
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         "Upgrade to Pro",
@@ -321,7 +382,7 @@ fun ProBanner() {
                         color = Color.White.copy(alpha = 0.8f)
                     )
                 }
-                
+
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
@@ -353,7 +414,10 @@ fun SettingsGroup(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.surfaceContainerLow,
-            border = if (isSystemInDarkTheme()) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+            border = if (isSystemInDarkTheme()) null else BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+            )
         ) {
             Column(content = content)
         }
@@ -375,11 +439,14 @@ fun ThemeSelector(
             SegmentedButton(
                 selected = selectedMode == mode,
                 onClick = { onModeSelected(mode) },
-                shape = SegmentedButtonDefaults.itemShape(index = index, count = ThemeMode.entries.size),
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = ThemeMode.entries.size
+                ),
                 icon = {
                     SegmentedButtonDefaults.Icon(active = selectedMode == mode) {
                         Icon(
-                            imageVector = when(mode) {
+                            imageVector = when (mode) {
                                 ThemeMode.LIGHT -> Icons.Default.LightMode
                                 ThemeMode.DARK -> Icons.Default.DarkMode
                                 ThemeMode.SYSTEM -> Icons.Default.SettingsSuggest
@@ -391,7 +458,7 @@ fun ThemeSelector(
                 }
             ) {
                 Text(
-                    text = when(mode) {
+                    text = when (mode) {
                         ThemeMode.LIGHT -> "Light"
                         ThemeMode.DARK -> "Dark"
                         ThemeMode.SYSTEM -> "Auto"
@@ -462,7 +529,7 @@ fun SettingsItem(
                 )
             }
         }
-        
+
         if (content != null) {
             content()
         }

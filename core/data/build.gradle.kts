@@ -10,16 +10,14 @@ plugins {
 }
 
 kotlin {
-
-    // Target declarations - add or remove as needed below. These define
-    // which platforms this KMP module supports.
-    // See: https://kotlinlang.org/docs/multiplatform-discover-project.html#targets
+    // 1. Android Target Configuration
     android {
         namespace = "tech.nullexdev.cinemood.core.data"
         compileSdk = 37
         minSdk = 24
 
         withHostTestBuilder {
+            // Configure host tests if needed
         }
 
         withDeviceTestBuilder {
@@ -29,14 +27,7 @@ kotlin {
         }
     }
 
-    // For iOS targets, this is also where you should
-    // configure native binary output. For more information, see:
-    // https://kotlinlang.org/docs/multiplatform-build-native-binaries.html#build-xcframeworks
-
-    // A step-by-step guide on how to include this library in an XCode
-    // project can be found here:
-    // https://developer.android.com/kotlin/multiplatform/migrate
-    val xcfName = "core:dataKit"
+    val xcfName = "core-dataKit"
 
     iosArm64 {
         binaries.framework {
@@ -64,6 +55,23 @@ kotlin {
     }
 
     sourceSets {
+        val webMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.sqldelight.web.worker.driver)
+                implementation(devNpm("sql.js", "1.12.0"))
+                implementation(libs.wrappers.browser)
+            }
+        }
+
+        val nativeJvmRoomMain by creating {
+            dependsOn(commonMain.get())
+            dependencies {
+                implementation(libs.androidx.room.runtime)
+                implementation(libs.androidx.sqlite.bundled)
+            }
+        }
+
         commonMain {
             dependencies {
                 implementation(project(":core:domain"))
@@ -76,24 +84,8 @@ kotlin {
             }
         }
 
-        val roomMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.androidx.room.runtime)
-                implementation(libs.androidx.sqlite.bundled)
-            }
-        }
-
-        val webMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.sqldelight.web.worker.driver)
-                implementation(devNpm("sql.js", "1.12.0"))
-            }
-        }
-
         androidMain {
-            dependsOn(roomMain)
+            dependsOn(nativeJvmRoomMain)
             dependencies {
                 implementation(libs.ktor.client.okhttp)
                 implementation(libs.okhttp.logging.interceptor)
@@ -103,15 +95,22 @@ kotlin {
         }
 
         iosMain {
-            dependsOn(roomMain)
+            dependsOn(nativeJvmRoomMain) // Connects Room safely
             dependencies {
                 implementation(libs.ktor.client.darwin)
                 implementation(libs.sqldelight.ios.driver)
             }
         }
 
+        val iosArm64Main by getting {
+            dependsOn(iosMain.get())
+        }
+        val iosSimulatorArm64Main by getting {
+            dependsOn(iosMain.get())
+        }
+
         jvmMain {
-            dependsOn(roomMain)
+            dependsOn(nativeJvmRoomMain)
             dependencies {
                 implementation("io.ktor:ktor-client-java:${libs.versions.ktor.get()}")
                 implementation(libs.sqldelight.sqlite.driver)
